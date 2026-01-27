@@ -18,7 +18,7 @@ func PostHandler(res http.ResponseWriter, req *http.Request) {
 	//читаем тело запроса
 	body, err := io.ReadAll(req.Body)
 	if err != nil {
-		http.Error(res, "Ошибка чтения тела", http.StatusBadRequest)
+		http.Error(res, "Body reading error", http.StatusBadRequest)
 		return
 	}
 	defer req.Body.Close()
