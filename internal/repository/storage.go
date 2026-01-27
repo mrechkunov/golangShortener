@@ -2,10 +2,10 @@ package repository
 
 var Storage = make(map[string]string)
 
-func InsertData(url string, shortUrl string) {
-	Storage[shortUrl] = url
+func InsertData(url string, shortURL string) {
+	Storage[shortURL] = url
 }
 
-func SelectData(shortUrl string) string {
-	return Storage[shortUrl]
+func SelectData(shortURL string) string {
+	return Storage[shortURL]
 }

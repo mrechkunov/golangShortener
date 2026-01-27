@@ -12,9 +12,9 @@ func GetHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	shortUrl := string(req.RequestURI)
-	shortUrl = shortUrl[1:]
-	res.Header().Set("Location", repository.SelectData(shortUrl))
+	shortURL := string(req.RequestURI)
+	shortURL = shortURL[1:]
+	res.Header().Set("Location", repository.SelectData(shortURL))
 	res.Header().Set("Content-type", "text/plain")
 	res.WriteHeader(http.StatusTemporaryRedirect)
 }
