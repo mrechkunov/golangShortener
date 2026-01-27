@@ -7,6 +7,7 @@ import (
 )
 
 func main() {
+
 	mux := http.NewServeMux()
 	mux.HandleFunc(`/`, handler.PostHandler)
 	mux.HandleFunc(`/{id}`, handler.GetHandler)
