@@ -30,7 +30,7 @@ func TestPostHandler(t *testing.T) {
 			want: want{
 				code:        201,
 				response:    "http://example.com/7c4e7828",
-				contentType: "text/plain",
+				contentType: "text/plain; charset=utf-8",
 			},
 		},
 		{

@@ -20,10 +20,10 @@ func TestGetHandler(t *testing.T) {
 	tests := []struct {
 		name        string // наименовение теста
 		want        want   // ожидаемый результат
-		reqEndPoint string // передаваемые параметры запроса
+		reqEndPoint string // точка входа
 	}{
 		{
-			name:        "Bad request",
+			name:        "Bad request test",
 			reqEndPoint: "/badRequest",
 			want: want{
 				code:        400,
