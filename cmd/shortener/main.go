@@ -4,10 +4,12 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/mrechkunov/golangShortener.git/config"
 	"github.com/mrechkunov/golangShortener.git/internal/handler"
 )
 
 func main() {
+	config.Init()
 	r := chi.NewRouter()
 	r.Post("/", handler.PostHandler)
 	r.Get("/{id}", handler.GetHandler)
