@@ -7,10 +7,12 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/mrechkunov/golangShortener.git/internal/config"
 	"github.com/mrechkunov/golangShortener.git/internal/repository"
 )
 
 func PostHandler(res http.ResponseWriter, req *http.Request) {
+	baseResultAdress := config.ConfigAdreses.ResultServerAdress
 	if req.Method != http.MethodPost {
 		http.Error(res, "Only POST requests are allowed!", http.StatusBadRequest)
 		return
@@ -24,7 +26,7 @@ func PostHandler(res http.ResponseWriter, req *http.Request) {
 	defer req.Body.Close()
 	//сокращаем url
 	hash := sha256.Sum256([]byte(body))
-	shortURL := "http://" + req.Host + "/" + hex.EncodeToString(hash[:4]) // 4 байта хеша = 8 символов в hex
+	shortURL := baseResultAdress + "/" + hex.EncodeToString(hash[:4]) // 4 байта хеша = 8 символов в hex
 	//формируем заголовок ответа
 	res.Header().Set("content-type", "text/plain; charset=utf-8")
 	res.Header().Set("Content-Length", strconv.Itoa(len(shortURL)))

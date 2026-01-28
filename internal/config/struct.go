@@ -2,17 +2,22 @@ package config
 
 import (
 	"flag"
-	"fmt"
 )
 
-type str struct {
-	ServerBindAdress   *string
-	ResultServerAdress *string
+type Adreses struct {
+	ServerBindAdress   string
+	ResultServerAdress string
+}
+
+var ConfigAdreses = Adreses{
+	ServerBindAdress:   "localhost:8080",
+	ResultServerAdress: "http://localhost:8080", // для работы unit теста
 }
 
 func Init() {
-	var str str
-	str.ServerBindAdress = flag.String("adress", "localhost:8080", "adress to server run")
+	ba := flag.String("a", "localhost:8080", "adress to server run")
+	ra := flag.String("b", "http://localhost:8080", "default responce server adress")
 	flag.Parse()
-	fmt.Println(&str.ServerBindAdress)
+	ConfigAdreses.ServerBindAdress = *ba
+	ConfigAdreses.ResultServerAdress = *ra
 }
