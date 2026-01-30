@@ -33,5 +33,5 @@ func PostHandler(res http.ResponseWriter, req *http.Request) {
 	res.WriteHeader(http.StatusCreated)
 	//записываем ответ
 	res.Write([]byte(shortURL))
-	repository.InsertData(string(body), hex.EncodeToString(hash[:4]))
+	repository.SetData(hex.EncodeToString(hash[:4]), string(body))
 }

@@ -1,11 +1,29 @@
 package repository
 
-var Storage = make(map[string]string)
+import "sync"
 
-func InsertData(url string, shortURL string) {
-	Storage[shortURL] = url
+type SafeMap struct {
+	mu sync.RWMutex
+	m  map[string]string
 }
 
-func SelectData(shortURL string) string {
-	return Storage[shortURL]
+func NewSafeMap() *SafeMap {
+	return &SafeMap{
+		m: make(map[string]string),
+	}
+}
+
+var Storage *SafeMap = NewSafeMap()
+
+func SetData(shortURL string, url string) {
+	Storage.mu.Lock() // Блокировка на запись
+	defer Storage.mu.Unlock()
+	Storage.m[shortURL] = url
+}
+
+func GetData(shortURL string) (string, bool) {
+	// Storage.mu.RLock() // Блокировка на чтение
+	// defer Storage.mu.RUnlock()
+	url, ok := Storage.m[shortURL]
+	return url, ok
 }
