@@ -13,17 +13,17 @@ func NewSafeMap() *SafeMap {
 	}
 }
 
-var Storage *SafeMap = NewSafeMap()
-
-func SetData(shortURL string, url string) {
-	Storage.mu.Lock() // Блокировка на запись
-	defer Storage.mu.Unlock()
-	Storage.m[shortURL] = url
+func (s *SafeMap) SetData(shortURL string, url string) {
+	s.mu.Lock() // Блокировка на запись
+	defer s.mu.Unlock()
+	s.m[shortURL] = url
 }
 
-func GetData(shortURL string) (string, bool) {
-	// Storage.mu.RLock() // Блокировка на чтение
-	// defer Storage.mu.RUnlock()
-	url, ok := Storage.m[shortURL]
+func (s *SafeMap) GetData(shortURL string) (string, bool) {
+	s.mu.RLock() // Блокировка на чтение
+	defer s.mu.RUnlock()
+	url, ok := s.m[shortURL]
 	return url, ok
 }
+
+var Storage *SafeMap = NewSafeMap()
