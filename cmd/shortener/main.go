@@ -6,32 +6,34 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/mrechkunov/golangShortener.git/internal/config"
 	"github.com/mrechkunov/golangShortener.git/internal/handler"
+	"github.com/mrechkunov/golangShortener.git/internal/logger"
+
 	"go.uber.org/zap"
 )
 
 func main() {
 	// создаём предустановленный регистратор zap
-	logger, err := zap.NewDevelopment()
+	logg, err := zap.NewDevelopment()
 	if err != nil {
 		// вызываем панику, если ошибка
 		panic(err)
 	}
-	defer logger.Sync()
+	defer logg.Sync()
 
 	// делаем регистратор SugaredLogger
-	Sugar = *logger.Sugar()
+	logger.Sugar = *logg.Sugar()
 
 	config.Init()
 	//log.Println("reading config")
 	r := chi.NewRouter()
-	r.Post("/", handler.PostHandler)
-	r.Get("/{id}", handler.GetHandler)
-	Sugar.Infow(
+	r.Post("/", logger.WithLogging(handler.PostHandler))
+	r.Get("/{id}", logger.WithLogging(handler.GetHandler))
+	logger.Sugar.Infow(
 		"Starting server",
 		"addr", config.ConfigAdreses.ServerBindAdress,
 	)
 	if err := http.ListenAndServe(config.ConfigAdreses.ServerBindAdress, r); err != nil {
 		// записываем в лог ошибку, если сервер не запустился
-		Sugar.Fatalw(err.Error(), "event", "start server")
+		logger.Sugar.Fatalw(err.Error(), "event", "start server")
 	}
 }
