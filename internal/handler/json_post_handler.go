@@ -5,36 +5,36 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"net/http"
-	"strconv"
 
 	"github.com/mrechkunov/golangShortener.git/internal/config"
 	"github.com/mrechkunov/golangShortener.git/internal/model"
 	"github.com/mrechkunov/golangShortener.git/internal/repository"
 )
 
-func JSONPostHandler(res http.ResponseWriter, req *http.Request) {
+func JSONPostHandler(w http.ResponseWriter, r *http.Request) {
 	baseResultAdress := config.ConfigAdreses.ResultServerAdress
-	if req.Method != http.MethodPost {
-		http.Error(res, "Only POST requests are allowed!", http.StatusBadRequest)
+	if r.Method != http.MethodPost {
+		http.Error(w, "Only POST requests are allowed!", http.StatusMethodNotAllowed)
 		return
 	}
-	var reqq model.JSONStruct
-
-	// Декодируем JSON из тела запроса
-	err := json.NewDecoder(req.Body).Decode(&reqq)
-	if err != nil {
-		http.Error(res, "JSON parsing error", http.StatusBadRequest)
+	var req model.RequestData
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
 	//сокращаем url
-	hash := sha256.Sum256([]byte(reqq.URL))
-	reqq.ShortURL = baseResultAdress + "/" + hex.EncodeToString(hash[:4]) // 4 байта хеша = 8 символов в hex
+	hash := sha256.Sum256([]byte(req.URL))
+	ShortURL := baseResultAdress + "/" + hex.EncodeToString(hash[:4]) // 4 байта хеша = 8 символов в hex
+
+	var resp model.ResponseData
+	resp.ShortURL = ShortURL
+
 	//формируем заголовок ответа
-	res.Header().Set("content-type", "application/json")
-	res.Header().Set("Content-Length", strconv.Itoa(len(reqq.ShortURL)))
-	res.WriteHeader(http.StatusCreated)
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
 	//записываем ответ
-	res.Write([]byte(reqq.ShortURL))
-	repository.Storage.SetData(hex.EncodeToString(hash[:4]), string(reqq.URL))
+	json.NewEncoder(w).Encode(resp.ShortURL)
+	// пишем в хранилище
+	repository.Storage.SetData(hex.EncodeToString(hash[:4]), string(req.URL))
 }
