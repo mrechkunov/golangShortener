@@ -14,7 +14,7 @@ import (
 func JSONPostHandler(w http.ResponseWriter, r *http.Request) {
 	baseResultAdress := config.ConfigAdreses.ResultServerAdress
 	if r.Method != http.MethodPost {
-		http.Error(w, "Only POST requests are allowed!", http.StatusMethodNotAllowed)
+		http.Error(w, "Only POST requests are allowed!", http.StatusBadRequest)
 		return
 	}
 	var req model.RequestData
