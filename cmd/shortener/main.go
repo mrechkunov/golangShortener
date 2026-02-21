@@ -27,6 +27,7 @@ func main() {
 	//log.Println("reading config")
 	r := chi.NewRouter()
 	r.Post("/", logger.WithLogging(handler.PostHandler))
+	r.Post("/api/shorten", logger.WithLogging(handler.JSONPostHandler))
 	r.Get("/{id}", logger.WithLogging(handler.GetHandler))
 	logger.Sugar.Infow(
 		"Starting server",
