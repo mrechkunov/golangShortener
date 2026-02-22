@@ -34,7 +34,7 @@ func JSONPostHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 	//записываем ответ
-	json.NewEncoder(w).Encode(resp.ShortURL)
+	json.NewEncoder(w).Encode(resp)
 	// пишем в хранилище
 	repository.Storage.SetData(hex.EncodeToString(hash[:4]), string(req.URL))
 }
