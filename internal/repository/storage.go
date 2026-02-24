@@ -2,27 +2,43 @@ package repository
 
 import "sync"
 
-type SafeMap struct {
-	mu sync.RWMutex
-	m  map[string]string
+type Event struct {
+	Id          int    `json:"uuid"`
+	ShortURL    string `json:"short_url"`
+	OriginalURL string `json:"original_url"`
 }
 
-func NewSafeMap() *SafeMap {
-	return &SafeMap{
-		m: make(map[string]string),
+type SafeSlice struct {
+	mu sync.RWMutex
+	e  []Event
+}
+
+func NewSafeSlice() *SafeSlice {
+	return &SafeSlice{
+		e: make([]Event, 0),
 	}
 }
 
-func (s *SafeMap) SetData(shortURL string, url string) {
+func (s *SafeSlice) SetData(shortURL string, url string) {
 	s.mu.Lock() // Блокировка на запись
 	defer s.mu.Unlock()
-	s.m[shortURL] = url
+	if s.e[len(s.e)] == 0 {
+		nextID := 1
+	} else {
+		nextID := s.e[len(s.e)-1].Id - 1
+	}
+
+	nextEvent := s[len(e)-1]
+	nextEvent[0].Id
+
+	s = append(s)
+	s.s[shortURL] = url
 }
 
 func (s *SafeMap) GetData(shortURL string) (string, bool) {
 	s.mu.RLock() // Блокировка на чтение
 	defer s.mu.RUnlock()
-	url, ok := s.m[shortURL]
+	url, ok := s.s[shortURL]
 	return url, ok
 }
 
