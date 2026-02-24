@@ -58,7 +58,7 @@ func (s *SafeSlice) SetData(shortURL string, url string) {
 func (s *SafeSlice) ReadDataFromFile() {
 	var C *Consumer
 	var err error
-	C, err = NewConsumer(config.ConfigAdreses.JSONFile)
+	C, _ = NewConsumer(config.ConfigAdreses.JSONFile)
 	// if err != nil {
 	// 	logger.Sugar.Errorln("error while file opening (Consumer)")
 	// }
