@@ -63,6 +63,7 @@ func TestJSONPostHandler(t *testing.T) {
 			//создаем новый Recorder
 			w := httptest.NewRecorder()
 			handler.JSONPostHandler(w, request)
+			defer w.Result().Body.Close()
 			if status := w.Code; status != http.StatusCreated {
 				// t.Errorf("handler returned wrong status code: got %v want %v",
 				// 	status, http.StatusOK)
@@ -81,15 +82,7 @@ func TestJSONPostHandler(t *testing.T) {
 				assert.Equal(t, expectedResponse, actualResponse)
 				assert.Equal(t, tt.want.contentType, w.Result().Header.Get("Content-Type"))
 			}
-			// res := w.Result()
 
-			// // получаем и проверяем тело запроса
-			// defer res.Body.Close()
-			// resBody, err := io.ReadAll(res.Body)
-			// require.NoError(t, err)
-			// // проверяем
-
-			//
 		})
 	}
 }
