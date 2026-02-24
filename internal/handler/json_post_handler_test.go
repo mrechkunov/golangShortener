@@ -63,11 +63,11 @@ func TestJSONPostHandler(t *testing.T) {
 			//создаем новый Recorder
 			w := httptest.NewRecorder()
 			handler.JSONPostHandler(w, request)
-
+			resp := w.Result()
+			defer resp.Body.Close()
 			if status := w.Code; status != http.StatusCreated {
-				assert.Equal(t, tt.want.code, w.Result().StatusCode)
-				assert.Equal(t, tt.want.contentType, w.Result().Header.Get("Content-Type"))
-				w.Result().Body.Close()
+				assert.Equal(t, tt.want.code, resp.StatusCode)
+				assert.Equal(t, tt.want.contentType, resp.Header.Get("Content-Type"))
 			} else {
 
 				expectedResponse := ResponseBody{Result: tt.want.response}
@@ -76,10 +76,9 @@ func TestJSONPostHandler(t *testing.T) {
 				if err != nil {
 					t.Fatal(err)
 				}
-				assert.Equal(t, tt.want.code, w.Result().StatusCode)
+				assert.Equal(t, tt.want.code, resp.StatusCode)
 				assert.Equal(t, expectedResponse, actualResponse)
-				assert.Equal(t, tt.want.contentType, w.Result().Header.Get("Content-Type"))
-				w.Result().Body.Close()
+				assert.Equal(t, tt.want.contentType, resp.Header.Get("Content-Type"))
 			}
 
 		})
