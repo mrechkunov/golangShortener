@@ -26,17 +26,14 @@ func main() {
 	logger.Sugar = *logg.Sugar()
 
 	config.Init()
-	//log.Println("reading config")
+	logger.Sugar.Infoln("Reading config")
 	repository.Storage.ReadDataFromFile()
 
 	r := chi.NewRouter()
 	r.Post("/", logger.WithLogging(gzipMiddleware(handler.PostHandler)))
 	r.Post("/api/shorten", logger.WithLogging(gzipMiddleware(handler.JSONPostHandler)))
 	r.Get("/{id}", logger.WithLogging(gzipMiddleware(handler.GetHandler)))
-	logger.Sugar.Infow(
-		"Starting server",
-		"addr", config.ConfigAdreses.ServerBindAdress,
-	)
+	logger.Sugar.Infoln("Starting server", "addr", config.ConfigAdreses.ServerBindAdress)
 	if err := http.ListenAndServe(config.ConfigAdreses.ServerBindAdress, r); err != nil {
 		// записываем в лог ошибку, если сервер не запустился
 		logger.Sugar.Fatalw(err.Error(), "event", "start server")

@@ -1,10 +1,11 @@
 package repository
 
 import (
-	"fmt"
 	"sync"
 
 	"github.com/mrechkunov/golangShortener.git/internal/config"
+	"github.com/mrechkunov/golangShortener.git/internal/logger"
+	"go.uber.org/zap"
 )
 
 type Event struct {
@@ -25,10 +26,20 @@ func NewSafeSlice() *SafeSlice {
 }
 
 func (s *SafeSlice) SetData(shortURL string, url string) {
-	Producer, _ := NewProducer(config.ConfigAdreses.JSONFile)
-	// if err != nil {
-	// 	logger.Sugar.Infow("error while file opening (Producer)")
-	// }
+	// создаём предустановленный регистратор zap
+	logg, err := zap.NewDevelopment()
+	if err != nil {
+		// вызываем панику, если ошибка
+		panic(err)
+	}
+	defer logg.Sync()
+	// делаем регистратор SugaredLogger
+	logger.Sugar = *logg.Sugar()
+
+	Producer, err := NewProducer(config.ConfigAdreses.JSONFile)
+	if err != nil {
+		logger.Sugar.Errorln("error while file opening (Producer)")
+	}
 	s.mu.Lock() // Блокировка на запись
 	defer s.mu.Unlock()
 	var nextElement Event
@@ -47,8 +58,8 @@ func (s *SafeSlice) SetData(shortURL string, url string) {
 		}
 	}
 	if isExist {
-		//logger.Sugar.Infow("URL", nextElement.OriginalURL, "already exist in storage")
-		fmt.Println("URL", nextElement.OriginalURL, "already exist in storage")
+		logger.Sugar.Infoln("URL", nextElement.OriginalURL, "already exist in storage")
+		//fmt.Println("URL", nextElement.OriginalURL, "already exist in storage")
 	} else {
 		s.e = append(s.e, nextElement)
 		Producer.WriteEvent(&nextElement)
@@ -56,12 +67,20 @@ func (s *SafeSlice) SetData(shortURL string, url string) {
 }
 
 func (s *SafeSlice) ReadDataFromFile() {
+	// создаём предустановленный регистратор zap
+	logg, err := zap.NewDevelopment()
+	if err != nil {
+		// вызываем панику, если ошибка
+		panic(err)
+	}
+	defer logg.Sync()
+	// делаем регистратор SugaredLogger
+	logger.Sugar = *logg.Sugar()
 	var C *Consumer
-	var err error
-	C, _ = NewConsumer(config.ConfigAdreses.JSONFile)
-	// if err != nil {
-	// 	logger.Sugar.Errorln("error while file opening (Consumer)")
-	// }
+	C, err = NewConsumer(config.ConfigAdreses.JSONFile)
+	if err != nil {
+		logger.Sugar.Errorln("error while file opening (Consumer)")
+	}
 	var el *Event
 	for {
 		if el, err = C.ReadEvent(); err != nil && el != nil {
@@ -76,6 +95,16 @@ func (s *SafeSlice) ReadDataFromFile() {
 }
 
 func (s *SafeSlice) GetData(shortURL string) (string, bool) {
+
+	// создаём предустановленный регистратор zap
+	logg, err := zap.NewDevelopment()
+	if err != nil {
+		// вызываем панику, если ошибка
+		panic(err)
+	}
+	defer logg.Sync()
+	// делаем регистратор SugaredLogger
+	logger.Sugar = *logg.Sugar()
 	s.mu.RLock() // Блокировка на чтение
 	defer s.mu.RUnlock()
 	var urlToReturn string
@@ -87,8 +116,8 @@ func (s *SafeSlice) GetData(shortURL string) (string, bool) {
 		}
 	}
 	if !isExist {
-		//	logger.Sugar.Infow("ShortURL", shortURL, "is not exist in storage")
-		fmt.Println("ShortURL", shortURL, "is not exist in storage")
+		logger.Sugar.Infoln("ShortURL", shortURL, "is not exist in storage")
+		//fmt.Println("ShortURL", shortURL, "is not exist in storage")
 	}
 	return urlToReturn, isExist
 }
