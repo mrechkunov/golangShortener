@@ -7,6 +7,7 @@ import (
 	"github.com/mrechkunov/golangShortener.git/internal/config"
 	"github.com/mrechkunov/golangShortener.git/internal/handler"
 	"github.com/mrechkunov/golangShortener.git/internal/logger"
+	"github.com/mrechkunov/golangShortener.git/internal/repository"
 
 	"go.uber.org/zap"
 )
@@ -26,6 +27,8 @@ func main() {
 
 	config.Init()
 	//log.Println("reading config")
+	repository.Storage.ReadDataFromFile()
+
 	r := chi.NewRouter()
 	r.Post("/", logger.WithLogging(gzipMiddleware(handler.PostHandler)))
 	r.Post("/api/shorten", logger.WithLogging(gzipMiddleware(handler.JSONPostHandler)))

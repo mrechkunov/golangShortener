@@ -1,6 +1,11 @@
 package repository
 
-import "sync"
+import (
+	"sync"
+
+	"github.com/mrechkunov/golangShortener.git/internal/config"
+	"github.com/mrechkunov/golangShortener.git/internal/logger"
+)
 
 type Event struct {
 	Id          int    `json:"uuid"`
@@ -20,26 +25,78 @@ func NewSafeSlice() *SafeSlice {
 }
 
 func (s *SafeSlice) SetData(shortURL string, url string) {
+	Producer, err := NewProducer(config.ConfigAdreses.JSONFile)
+	if err != nil {
+		logger.Sugar.Errorln("error while file opening (Producer)")
+	}
 	s.mu.Lock() // Блокировка на запись
 	defer s.mu.Unlock()
-	if s.e[len(s.e)] == 0 {
-		nextID := 1
+	var nextElement Event
+	if len(s.e) == 0 {
+		nextElement.Id = 1
 	} else {
-		nextID := s.e[len(s.e)-1].Id - 1
+		nextElement.Id = s.e[len(s.e)-1].Id + 1
 	}
-
-	nextEvent := s[len(e)-1]
-	nextEvent[0].Id
-
-	s = append(s)
-	s.s[shortURL] = url
+	nextElement.OriginalURL = url
+	nextElement.ShortURL = shortURL
+	// проверяем по url есть ли в слайсе такой элемент
+	isExist := false
+	for _, el := range s.e {
+		if el.OriginalURL == nextElement.OriginalURL {
+			isExist = true
+		}
+	}
+	if isExist {
+		logger.Sugar.Infow("URL", nextElement.OriginalURL, "already exist in storage")
+	} else {
+		s.e = append(s.e, nextElement)
+		Producer.WriteEvent(&nextElement)
+	}
 }
 
-func (s *SafeMap) GetData(shortURL string) (string, bool) {
+func (s *SafeSlice) ReadDataFromFile() {
+	var C *Consumer
+	var err error
+	C, err = NewConsumer(config.ConfigAdreses.JSONFile)
+	if err != nil {
+		logger.Sugar.Errorln("error while file opening (Consumer)")
+	}
+	var el *Event
+	for {
+		if el, err = C.ReadEvent(); err != nil {
+			s.mu.Lock() // Блокировка на запись
+			defer s.mu.Unlock()
+			var nextElement Event
+			if len(s.e) == 0 {
+				nextElement.Id = 1
+			} else {
+				nextElement.Id = s.e[len(s.e)-1].Id + 1
+			}
+			nextElement.OriginalURL = el.OriginalURL
+			nextElement.ShortURL = el.ShortURL
+			s.e = append(s.e, nextElement)
+		} else {
+			break
+		}
+
+	}
+}
+
+func (s *SafeSlice) GetData(shortURL string) (string, bool) {
 	s.mu.RLock() // Блокировка на чтение
 	defer s.mu.RUnlock()
-	url, ok := s.s[shortURL]
-	return url, ok
+	var urlToReturn string
+	isExist := false
+	for _, el := range s.e {
+		if el.ShortURL == shortURL {
+			isExist = true
+			urlToReturn = el.OriginalURL
+		}
+	}
+	if !isExist {
+		logger.Sugar.Infow("ShortURL", shortURL, "is not exist in storage")
+	}
+	return urlToReturn, isExist
 }
 
-var Storage *SafeMap = NewSafeMap()
+var Storage *SafeSlice = NewSafeSlice()
