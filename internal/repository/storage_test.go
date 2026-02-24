@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestInsertData(t *testing.T) {
+func TestSafeSlice_SetData(t *testing.T) {
 	tests := []struct {
 		name string // description of this test case
 		// Named input parameters for target function.
@@ -24,7 +24,7 @@ func TestInsertData(t *testing.T) {
 	}
 }
 
-func TestSelectData(t *testing.T) {
+func TestSafeSlice_GetData(t *testing.T) {
 	tests := []struct {
 		name string // description of this test case
 		// Named input parameters for target function.

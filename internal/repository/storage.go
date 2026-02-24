@@ -1,10 +1,10 @@
 package repository
 
 import (
+	"fmt"
 	"sync"
 
 	"github.com/mrechkunov/golangShortener.git/internal/config"
-	"github.com/mrechkunov/golangShortener.git/internal/logger"
 )
 
 type Event struct {
@@ -25,10 +25,10 @@ func NewSafeSlice() *SafeSlice {
 }
 
 func (s *SafeSlice) SetData(shortURL string, url string) {
-	Producer, err := NewProducer(config.ConfigAdreses.JSONFile)
-	if err != nil {
-		logger.Sugar.Errorln("error while file opening (Producer)")
-	}
+	Producer, _ := NewProducer(config.ConfigAdreses.JSONFile)
+	// if err != nil {
+	// 	logger.Sugar.Infow("error while file opening (Producer)")
+	// }
 	s.mu.Lock() // Блокировка на запись
 	defer s.mu.Unlock()
 	var nextElement Event
@@ -47,7 +47,8 @@ func (s *SafeSlice) SetData(shortURL string, url string) {
 		}
 	}
 	if isExist {
-		logger.Sugar.Infow("URL", nextElement.OriginalURL, "already exist in storage")
+		//logger.Sugar.Infow("URL", nextElement.OriginalURL, "already exist in storage")
+		fmt.Println("URL", nextElement.OriginalURL, "already exist in storage")
 	} else {
 		s.e = append(s.e, nextElement)
 		Producer.WriteEvent(&nextElement)
@@ -58,9 +59,9 @@ func (s *SafeSlice) ReadDataFromFile() {
 	var C *Consumer
 	var err error
 	C, err = NewConsumer(config.ConfigAdreses.JSONFile)
-	if err != nil {
-		logger.Sugar.Errorln("error while file opening (Consumer)")
-	}
+	// if err != nil {
+	// 	logger.Sugar.Errorln("error while file opening (Consumer)")
+	// }
 	var el *Event
 	for {
 		if el, err = C.ReadEvent(); err != nil && el != nil {
@@ -86,7 +87,8 @@ func (s *SafeSlice) GetData(shortURL string) (string, bool) {
 		}
 	}
 	if !isExist {
-		logger.Sugar.Infow("ShortURL", shortURL, "is not exist in storage")
+		//	logger.Sugar.Infow("ShortURL", shortURL, "is not exist in storage")
+		fmt.Println("ShortURL", shortURL, "is not exist in storage")
 	}
 	return urlToReturn, isExist
 }
