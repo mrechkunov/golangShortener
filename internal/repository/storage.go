@@ -63,18 +63,10 @@ func (s *SafeSlice) ReadDataFromFile() {
 	}
 	var el *Event
 	for {
-		if el, err = C.ReadEvent(); err != nil {
+		if el, err = C.ReadEvent(); err != nil && el != nil {
 			s.mu.Lock() // Блокировка на запись
 			defer s.mu.Unlock()
-			var nextElement Event
-			if len(s.e) == 0 {
-				nextElement.ID = 1
-			} else {
-				nextElement.ID = s.e[len(s.e)-1].ID + 1
-			}
-			nextElement.OriginalURL = el.OriginalURL
-			nextElement.ShortURL = el.ShortURL
-			s.e = append(s.e, nextElement)
+			s.e = append(s.e, *el)
 		} else {
 			break
 		}

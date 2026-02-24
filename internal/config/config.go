@@ -21,7 +21,7 @@ func Init() {
 
 	ba := flag.String("a", "localhost:8080", "adress to server run")
 	ra := flag.String("b", "http://localhost:8080", "default responce server adress")
-	jf := flag.String("f", "./file.txt", "default storage file")
+	jf := flag.String("f", "file.txt", "default storage file")
 	flag.Parse()
 
 	var isEnvBindSrv bool
