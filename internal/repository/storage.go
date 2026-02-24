@@ -8,7 +8,7 @@ import (
 )
 
 type Event struct {
-	Id          int    `json:"uuid"`
+	ID          int    `json:"uuid"`
 	ShortURL    string `json:"short_url"`
 	OriginalURL string `json:"original_url"`
 }
@@ -33,9 +33,9 @@ func (s *SafeSlice) SetData(shortURL string, url string) {
 	defer s.mu.Unlock()
 	var nextElement Event
 	if len(s.e) == 0 {
-		nextElement.Id = 1
+		nextElement.ID = 1
 	} else {
-		nextElement.Id = s.e[len(s.e)-1].Id + 1
+		nextElement.ID = s.e[len(s.e)-1].ID + 1
 	}
 	nextElement.OriginalURL = url
 	nextElement.ShortURL = shortURL
@@ -68,9 +68,9 @@ func (s *SafeSlice) ReadDataFromFile() {
 			defer s.mu.Unlock()
 			var nextElement Event
 			if len(s.e) == 0 {
-				nextElement.Id = 1
+				nextElement.ID = 1
 			} else {
-				nextElement.Id = s.e[len(s.e)-1].Id + 1
+				nextElement.ID = s.e[len(s.e)-1].ID + 1
 			}
 			nextElement.OriginalURL = el.OriginalURL
 			nextElement.ShortURL = el.ShortURL

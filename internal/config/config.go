@@ -26,11 +26,11 @@ func Init() {
 
 	var isEnvBindSrv bool
 	var isEnvResSrv bool
-	var isEnvJsonFile bool
+	var isEnvJSONFile bool
 	// проверяем установленны ли переменные окружения
 	_, isEnvBindSrv = os.LookupEnv("SERVER_ADDRESS")
 	_, isEnvResSrv = os.LookupEnv("BASE_URL")
-	_, isEnvJsonFile = os.LookupEnv("FILE_STORAGE_PATH")
+	_, isEnvJSONFile = os.LookupEnv("FILE_STORAGE_PATH")
 	// если переиенные окружения установленны, берем адреса из них, иначе берем адреса из флага
 	if isEnvBindSrv {
 		ConfigAdreses.ServerBindAdress = os.Getenv("SERVER_ADDRESS")
@@ -42,7 +42,7 @@ func Init() {
 	} else {
 		ConfigAdreses.ResultServerAdress = *ra
 	}
-	if isEnvJsonFile {
+	if isEnvJSONFile {
 		ConfigAdreses.JSONFile = os.Getenv("FILE_STORAGE_PATH")
 	} else {
 		ConfigAdreses.JSONFile = *jf
