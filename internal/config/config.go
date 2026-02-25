@@ -23,14 +23,7 @@ func Init() {
 	jf := flag.String("f", "file.txt", "default storage file")
 	flag.Parse()
 
-	//var isEnvBindSrv bool
-	//var isEnvResSrv bool
-	//var isEnvJSONFile bool
-	// проверяем установленны ли переменные окружения
-	//_, isEnvBindSrv = os.LookupEnv("SERVER_ADDRESS")
-	//_, isEnvResSrv = os.LookupEnv("BASE_URL")
-	//_, isEnvJSONFile = os.LookupEnv("FILE_STORAGE_PATH")
-	// если переиенные окружения установленны, берем адреса из них, иначе берем адреса из флага
+	// если переиенные окружения установленны, берем их, иначе берем флаг
 	if serverAddress, isEnvBindSrv := os.LookupEnv("SERVER_ADDRESS"); isEnvBindSrv {
 		ConfigAdreses.ServerBindAdress = serverAddress
 	} else {

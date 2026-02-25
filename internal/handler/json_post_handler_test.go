@@ -8,16 +8,9 @@ import (
 	"testing"
 
 	"github.com/mrechkunov/golangShortener.git/internal/handler"
+	"github.com/mrechkunov/golangShortener.git/internal/model"
 	"github.com/stretchr/testify/assert"
 )
-
-type RequestBody struct {
-	URL string `json:"url"`
-}
-
-type ResponseBody struct {
-	Result string `json:"result"`
-}
 
 func TestJSONPostHandler(t *testing.T) {
 	type want struct {
@@ -54,7 +47,7 @@ func TestJSONPostHandler(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			requestBody := RequestBody{tt.reqBody}
+			requestBody := model.RequestBody{tt.reqBody}
 			body, err := json.Marshal(requestBody)
 			if err != nil {
 				t.Fatal(err)
@@ -70,8 +63,8 @@ func TestJSONPostHandler(t *testing.T) {
 				assert.Equal(t, tt.want.contentType, resp.Header.Get("Content-Type"))
 			} else {
 
-				expectedResponse := ResponseBody{Result: tt.want.response}
-				var actualResponse ResponseBody
+				expectedResponse := model.ResponseBody{Result: tt.want.response}
+				var actualResponse model.ResponseBody
 				err = json.NewDecoder(w.Body).Decode(&actualResponse)
 				if err != nil {
 					t.Fatal(err)

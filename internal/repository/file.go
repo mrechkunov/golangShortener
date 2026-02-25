@@ -4,6 +4,8 @@ import (
 	"bufio"
 	"encoding/json"
 	"os"
+
+	"github.com/mrechkunov/golangShortener.git/internal/model"
 )
 
 type Producer struct {
@@ -25,7 +27,7 @@ func NewProducer(filename string) (*Producer, error) {
 	}, nil
 }
 
-func (p *Producer) WriteEvent(event *Event) error {
+func (p *Producer) WriteEvent(event *model.Event) error {
 	data, err := json.Marshal(&event)
 	if err != nil {
 		return err
@@ -68,7 +70,7 @@ func NewConsumer(filename string) (*Consumer, error) {
 	}, nil
 }
 
-func (c *Consumer) ReadEvent() (*Event, error) {
+func (c *Consumer) ReadEvent() (*model.Event, error) {
 	// читаем данные до символа переноса строки
 	data, err := c.reader.ReadBytes('\n')
 	if err != nil {
@@ -76,7 +78,7 @@ func (c *Consumer) ReadEvent() (*Event, error) {
 	}
 
 	// преобразуем данные из JSON-представления в структуру
-	event := Event{}
+	event := model.Event{}
 	err = json.Unmarshal(data, &event)
 	if err != nil {
 		return nil, err

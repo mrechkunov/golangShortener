@@ -5,116 +5,77 @@ import (
 
 	"github.com/mrechkunov/golangShortener.git/internal/config"
 	"github.com/mrechkunov/golangShortener.git/internal/logger"
+	"github.com/mrechkunov/golangShortener.git/internal/model"
 )
 
-type Event struct {
-	ID          int    `json:"uuid"`
-	ShortURL    string `json:"short_url"`
-	OriginalURL string `json:"original_url"`
+type SafeMap struct {
+	mu      sync.RWMutex
+	M       map[string]model.Event
+	counter int
 }
 
-type SafeSlice struct {
-	mu sync.RWMutex
-	E  []Event
-}
-
-func NewSafeSlice() *SafeSlice {
-	return &SafeSlice{
-		E: make([]Event, 0),
+func NewSafeMap() *SafeMap {
+	return &SafeMap{
+		M:       make(map[string]model.Event),
+		counter: 1,
 	}
 }
 
-func (s *SafeSlice) SetData(shortURL string, url string) {
-	p, err := NewProducer(config.ConfigAdreses.JSONFile) // создаем новый продюсер для записи в файл
-	if err != nil {
-		logger.Log.Errorln("error while file opening (Producer)")
+func (s *SafeMap) SetData(shortURL string, originalURL string) {
+	s.mu.Lock() // Блокировка на запись
+	defer s.mu.Unlock()
+	newEvent := model.Event{
+		ID:          s.counter,
+		ShortURL:    shortURL,
+		OriginalURL: originalURL,
 	}
-	defer p.Close() // закроем файл при выходе из функции
-
-	s.mu.Lock()         // блокировка на запись
-	defer s.mu.Unlock() // разблокировка при выходе из функции
-
-	var nextElement Event
-	if len(s.E) == 0 {
-		nextElement.ID = 1
-	} else {
-		nextElement.ID = s.E[len(s.E)-1].ID + 1
-	}
-	nextElement.OriginalURL = url
-	nextElement.ShortURL = shortURL
-	// проверяем по url есть ли в слайсе такой элемент
-	isExist := false
-	for _, el := range s.E {
-		if el.OriginalURL == nextElement.OriginalURL {
-			isExist = true
+	if _, ok := s.M[shortURL]; !ok {
+		s.M[shortURL] = newEvent
+		s.counter++
+		// запишем событие в файл
+		p, err := NewProducer(config.ConfigAdreses.JSONFile) // создаем новый продюсер для записи в файл
+		if err != nil {
+			logger.Log.Errorln("error while file opening (Producer)")
 		}
-	}
-	if isExist {
-		logger.Log.Infoln("URL", nextElement.OriginalURL, "already exist in storage")
+		defer p.Close() // закроем файл при выходе из функции
+		p.WriteEvent(&newEvent)
 	} else {
-		s.E = append(s.E, nextElement)
-		p.WriteEvent(&nextElement)
+		logger.Log.Infoln("URL", originalURL, "already exist in storage")
 	}
+
 }
 
-func (s *SafeSlice) ReadDataFromFile() {
+func (s *SafeMap) GetData(shortURL string) (string, bool) {
+	s.mu.RLock() // Блокировка на чтение
+	defer s.mu.RUnlock()
+	if val, ok := s.M[shortURL]; !ok {
+		logger.Log.Errorln("URL", shortURL, "is not exist in storage")
+	} else {
+		originalURL := val.OriginalURL
+		return originalURL, true
+	}
+	return "", false
+}
+
+var Storage *SafeMap = NewSafeMap()
+
+func (s *SafeMap) ReadDataFromFile() {
 	c, err := NewConsumer(config.ConfigAdreses.JSONFile)
 	if err != nil {
 		logger.Log.Errorln("error while file opening (Consumer)")
 	}
 	defer c.Close()
+	var e *model.Event
 
 	for {
-		el, err := c.ReadEvent()
-		if err != nil {
+		if e, err = c.ReadEvent(); err != nil {
+			logger.Log.Infoln("EOF")
 			break
 		} else {
-			s.mu.Lock() // блокировка на запись
-
-			var nextElement Event
-			if len(s.E) == 0 {
-				nextElement.ID = 1
-			} else {
-				nextElement.ID = s.E[len(s.E)-1].ID + 1
-			}
-
-			nextElement.OriginalURL = el.OriginalURL
-			nextElement.ShortURL = el.ShortURL
-			s.E = append(s.E, nextElement)
-			s.mu.Unlock() // разблокировка
-		}
-
-		//		fmt.Println(el)
-	}
-}
-
-// for {
-// 	if el, err = c.ReadEvent(); err == nil && el != nil {
-// 		fmt.Println(el)
-
-// 		s.mu.Lock() // Блокировка на запись
-// 		defer s.mu.Unlock()
-// 		s.E = append(s.E, *el)
-// 	} else {
-// 		break
-// 	}
-// }
-
-func (s *SafeSlice) GetData(shortURL string) (string, bool) {
-	s.mu.RLock() // Блокировка на чтение
-	defer s.mu.RUnlock()
-	var urlToReturn string
-	isExist := false
-	for _, el := range s.E {
-		if el.ShortURL == shortURL {
-			isExist = true
-			urlToReturn = el.OriginalURL
+			s.mu.Lock() // Блокировка на запись
+			s.M[e.ShortURL] = *e
+			s.counter = e.ID + 1
+			s.mu.Unlock()
 		}
 	}
-	if !isExist {
-		logger.Log.Infoln("ShortURL", shortURL, "is not exist in storage")
-	}
-	return urlToReturn, isExist
 }
-
-var Storage *SafeSlice = NewSafeSlice()

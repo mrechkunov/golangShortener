@@ -14,7 +14,7 @@ func TestSafeSlice_SetData(t *testing.T) {
 		url      string
 		shortURL string
 	}{
-		{"Valid name", "http://test.test", "http://test.short"},
+		{"Valid name", "http://test.test1", "http://test.short"},
 		{"Empty name", "", ""},
 	}
 	for _, tt := range tests {
@@ -31,7 +31,7 @@ func TestSafeSlice_GetData(t *testing.T) {
 		shortURL string
 		want     string
 	}{
-		{"Valid name", "http://test.test", "http://test.test"},
+		{"Valid name", "http://test.test2", "http://test.test2"},
 		{"Empty name", "", ""},
 		// TODO: Add test cases.
 	}

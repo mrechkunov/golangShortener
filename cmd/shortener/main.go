@@ -15,9 +15,6 @@ func main() {
 	defer logger.Log.Sync() // закрываем логгер при выходе из main
 	logger.Log.Infoln("Reading config")
 	repository.Storage.ReadDataFromFile()
-	// for _, s := range repository.Storage.E {
-	// 	fmt.Println(s)
-	// }
 	r := chi.NewRouter()
 	r.Post("/", logger.WithLogging(gzipMiddleware(handler.PostHandler)))
 	r.Post("/api/shorten", logger.WithLogging(gzipMiddleware(handler.JSONPostHandler)))
