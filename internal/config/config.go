@@ -29,7 +29,7 @@ func Init() {
 	} else {
 		ConfigAdreses.ServerBindAdress = *ba
 	}
-	if baseURL, isEnvResSrv := os.LookupEnv("SERVER_ADDRESS"); isEnvResSrv {
+	if baseURL, isEnvResSrv := os.LookupEnv("BASE_URL"); isEnvResSrv {
 		ConfigAdreses.ResultServerAdress = baseURL
 	} else {
 		ConfigAdreses.ResultServerAdress = *ra
