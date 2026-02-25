@@ -1,0 +1,7 @@
+{"uuid":1,"short_url":"3501a08a","original_url":"http://yandex.usa/redfsdfg/ergerfg/werferfefre/34343r34r34/34r43r34r34r/34r34r34r34r34/r34r34r34"}
+{"uuid":2,"short_url":"35cd3a24","original_url":"http://yandex.usa/redfsdfg/ergerfg/werferfefre/34343r34r34/34r43r34r34r/34r34r34r34r34/"}
+{"uuid":3,"short_url":"1b8aa107","original_url":"http://yandex.usa"}
+{"uuid":4,"short_url":"c4908706","original_url":"http://yandex.u"}
+{"uuid":1,"short_url":"c4908706","original_url":"http://yandex.u"}
+{"uuid":1,"short_url":"c4908706","original_url":"http://yandex.u"}
+{"uuid":2,"short_url":"1b8aa107","original_url":"http://yandex.usa"}

@@ -45,6 +45,10 @@ func (p *Producer) WriteEvent(event *Event) error {
 	return p.writer.Flush()
 }
 
+func (p *Producer) Close() {
+	p.file.Close()
+}
+
 type Consumer struct {
 	file *os.File
 	// добавляем reader в Consumer
@@ -78,4 +82,7 @@ func (c *Consumer) ReadEvent() (*Event, error) {
 		return nil, err
 	}
 	return &event, nil
+}
+func (c *Consumer) Close() {
+	c.file.Close()
 }

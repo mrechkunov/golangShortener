@@ -18,32 +18,31 @@ var ConfigAdreses = Adreses{
 }
 
 func Init() {
-
 	ba := flag.String("a", "localhost:8080", "adress to server run")
 	ra := flag.String("b", "http://localhost:8080", "default responce server adress")
 	jf := flag.String("f", "file.txt", "default storage file")
 	flag.Parse()
 
-	var isEnvBindSrv bool
-	var isEnvResSrv bool
-	var isEnvJSONFile bool
+	//var isEnvBindSrv bool
+	//var isEnvResSrv bool
+	//var isEnvJSONFile bool
 	// проверяем установленны ли переменные окружения
-	_, isEnvBindSrv = os.LookupEnv("SERVER_ADDRESS")
-	_, isEnvResSrv = os.LookupEnv("BASE_URL")
-	_, isEnvJSONFile = os.LookupEnv("FILE_STORAGE_PATH")
+	//_, isEnvBindSrv = os.LookupEnv("SERVER_ADDRESS")
+	//_, isEnvResSrv = os.LookupEnv("BASE_URL")
+	//_, isEnvJSONFile = os.LookupEnv("FILE_STORAGE_PATH")
 	// если переиенные окружения установленны, берем адреса из них, иначе берем адреса из флага
-	if isEnvBindSrv {
-		ConfigAdreses.ServerBindAdress = os.Getenv("SERVER_ADDRESS")
+	if serverAddress, isEnvBindSrv := os.LookupEnv("SERVER_ADDRESS"); isEnvBindSrv {
+		ConfigAdreses.ServerBindAdress = serverAddress
 	} else {
 		ConfigAdreses.ServerBindAdress = *ba
 	}
-	if isEnvResSrv {
-		ConfigAdreses.ResultServerAdress = os.Getenv("BASE_URL")
+	if baseURL, isEnvResSrv := os.LookupEnv("SERVER_ADDRESS"); isEnvResSrv {
+		ConfigAdreses.ResultServerAdress = baseURL
 	} else {
 		ConfigAdreses.ResultServerAdress = *ra
 	}
-	if isEnvJSONFile {
-		ConfigAdreses.JSONFile = os.Getenv("FILE_STORAGE_PATH")
+	if fileStoragePath, isEnvJSONFile := os.LookupEnv("FILE_STORAGE_PATH"); isEnvJSONFile {
+		ConfigAdreses.JSONFile = fileStoragePath
 	} else {
 		ConfigAdreses.JSONFile = *jf
 	}

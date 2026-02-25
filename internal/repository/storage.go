@@ -5,7 +5,6 @@ import (
 
 	"github.com/mrechkunov/golangShortener.git/internal/config"
 	"github.com/mrechkunov/golangShortener.git/internal/logger"
-	"go.uber.org/zap"
 )
 
 type Event struct {
@@ -16,108 +15,104 @@ type Event struct {
 
 type SafeSlice struct {
 	mu sync.RWMutex
-	e  []Event
+	E  []Event
 }
 
 func NewSafeSlice() *SafeSlice {
 	return &SafeSlice{
-		e: make([]Event, 0),
+		E: make([]Event, 0),
 	}
 }
 
 func (s *SafeSlice) SetData(shortURL string, url string) {
-	// создаём предустановленный регистратор zap
-	logg, err := zap.NewDevelopment()
+	p, err := NewProducer(config.ConfigAdreses.JSONFile) // создаем новый продюсер для записи в файл
 	if err != nil {
-		// вызываем панику, если ошибка
-		panic(err)
+		logger.Log.Errorln("error while file opening (Producer)")
 	}
-	defer logg.Sync()
-	// делаем регистратор SugaredLogger
-	logger.Sugar = *logg.Sugar()
+	defer p.Close() // закроем файл при выходе из функции
 
-	Producer, err := NewProducer(config.ConfigAdreses.JSONFile)
-	if err != nil {
-		logger.Sugar.Errorln("error while file opening (Producer)")
-	}
-	s.mu.Lock() // Блокировка на запись
-	defer s.mu.Unlock()
+	s.mu.Lock()         // блокировка на запись
+	defer s.mu.Unlock() // разблокировка при выходе из функции
+
 	var nextElement Event
-	if len(s.e) == 0 {
+	if len(s.E) == 0 {
 		nextElement.ID = 1
 	} else {
-		nextElement.ID = s.e[len(s.e)-1].ID + 1
+		nextElement.ID = s.E[len(s.E)-1].ID + 1
 	}
 	nextElement.OriginalURL = url
 	nextElement.ShortURL = shortURL
 	// проверяем по url есть ли в слайсе такой элемент
 	isExist := false
-	for _, el := range s.e {
+	for _, el := range s.E {
 		if el.OriginalURL == nextElement.OriginalURL {
 			isExist = true
 		}
 	}
 	if isExist {
-		logger.Sugar.Infoln("URL", nextElement.OriginalURL, "already exist in storage")
-		//fmt.Println("URL", nextElement.OriginalURL, "already exist in storage")
+		logger.Log.Infoln("URL", nextElement.OriginalURL, "already exist in storage")
 	} else {
-		s.e = append(s.e, nextElement)
-		Producer.WriteEvent(&nextElement)
+		s.E = append(s.E, nextElement)
+		p.WriteEvent(&nextElement)
 	}
 }
 
 func (s *SafeSlice) ReadDataFromFile() {
-	// создаём предустановленный регистратор zap
-	logg, err := zap.NewDevelopment()
+	c, err := NewConsumer(config.ConfigAdreses.JSONFile)
 	if err != nil {
-		// вызываем панику, если ошибка
-		panic(err)
+		logger.Log.Errorln("error while file opening (Consumer)")
 	}
-	defer logg.Sync()
-	// делаем регистратор SugaredLogger
-	logger.Sugar = *logg.Sugar()
-	var C *Consumer
-	C, err = NewConsumer(config.ConfigAdreses.JSONFile)
-	if err != nil {
-		logger.Sugar.Errorln("error while file opening (Consumer)")
-	}
-	var el *Event
+	defer c.Close()
+
 	for {
-		if el, err = C.ReadEvent(); err != nil && el != nil {
-			s.mu.Lock() // Блокировка на запись
-			defer s.mu.Unlock()
-			s.e = append(s.e, *el)
-		} else {
+		el, err := c.ReadEvent()
+		if err != nil {
 			break
+		} else {
+			s.mu.Lock() // блокировка на запись
+
+			var nextElement Event
+			if len(s.E) == 0 {
+				nextElement.ID = 1
+			} else {
+				nextElement.ID = s.E[len(s.E)-1].ID + 1
+			}
+
+			nextElement.OriginalURL = el.OriginalURL
+			nextElement.ShortURL = el.ShortURL
+			s.E = append(s.E, nextElement)
+			s.mu.Unlock() // разблокировка
 		}
 
+		//		fmt.Println(el)
 	}
 }
 
-func (s *SafeSlice) GetData(shortURL string) (string, bool) {
+// for {
+// 	if el, err = c.ReadEvent(); err == nil && el != nil {
+// 		fmt.Println(el)
 
-	// создаём предустановленный регистратор zap
-	logg, err := zap.NewDevelopment()
-	if err != nil {
-		// вызываем панику, если ошибка
-		panic(err)
-	}
-	defer logg.Sync()
-	// делаем регистратор SugaredLogger
-	logger.Sugar = *logg.Sugar()
+// 		s.mu.Lock() // Блокировка на запись
+// 		defer s.mu.Unlock()
+// 		s.E = append(s.E, *el)
+// 	} else {
+// 		break
+// 	}
+// }
+
+func (s *SafeSlice) GetData(shortURL string) (string, bool) {
 	s.mu.RLock() // Блокировка на чтение
 	defer s.mu.RUnlock()
 	var urlToReturn string
 	isExist := false
-	for _, el := range s.e {
+	for _, el := range s.E {
 		if el.ShortURL == shortURL {
 			isExist = true
 			urlToReturn = el.OriginalURL
 		}
 	}
 	if !isExist {
-		logger.Sugar.Infoln("ShortURL", shortURL, "is not exist in storage")
-		//fmt.Println("ShortURL", shortURL, "is not exist in storage")
+		logger.Log.Infoln("ShortURL", shortURL, "is not exist in storage")
 	}
 	return urlToReturn, isExist
 }

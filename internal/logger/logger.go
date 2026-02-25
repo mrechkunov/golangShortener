@@ -34,8 +34,6 @@ func (r *loggingResponseWriter) WriteHeader(statusCode int) {
 	r.responseData.status = statusCode // захватываем код статуса
 }
 
-var Sugar zap.SugaredLogger
-
 // WithLogging добавляет дополнительный код для регистрации сведений о запросе
 // и возвращает новый http.Handler.
 func WithLogging(h http.HandlerFunc) http.HandlerFunc {
@@ -54,7 +52,7 @@ func WithLogging(h http.HandlerFunc) http.HandlerFunc {
 
 		duration := time.Since(start)
 
-		Sugar.Infoln(
+		Log.Infoln(
 			"uri", r.RequestURI,
 			"method", r.Method,
 			"status", responseData.status, // получаем перехваченный код статуса ответа
@@ -63,4 +61,19 @@ func WithLogging(h http.HandlerFunc) http.HandlerFunc {
 		)
 	}
 	return http.HandlerFunc(logFn)
+}
+
+// глобальный логгер
+var Log *zap.SugaredLogger
+
+func init() { // функция запускается автоматически при ипорте пакета
+	// создаём предустановленный регистратор zap
+	zapLogger, err := zap.NewDevelopment()
+	if err != nil {
+		// вызываем панику, если ошибка
+		panic(err)
+	}
+	defer zapLogger.Sync()
+	// делаем регистратор SugaredLogger
+	Log = zapLogger.Sugar()
 }
