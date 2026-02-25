@@ -47,7 +47,7 @@ func TestJSONPostHandler(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			requestBody := model.RequestBody{tt.reqBody}
+			requestBody := model.RequestBody{URL: tt.reqBody}
 			body, err := json.Marshal(requestBody)
 			if err != nil {
 				t.Fatal(err)
