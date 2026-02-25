@@ -3,6 +3,7 @@ package repository
 import (
 	"bufio"
 	"encoding/json"
+	"io"
 	"os"
 
 	"github.com/mrechkunov/golangShortener.git/internal/model"
@@ -15,7 +16,7 @@ type Producer struct {
 }
 
 func NewProducer(filename string) (*Producer, error) {
-	file, err := os.OpenFile(filename, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
+	file, err := os.OpenFile(filename, os.O_WRONLY|os.O_CREATE, 0666)
 	if err != nil {
 		return nil, err
 	}
@@ -40,6 +41,21 @@ func (p *Producer) WriteEvent(event *model.Event) error {
 
 	// добавляем перенос строки
 	if err := p.writer.WriteByte('\n'); err != nil {
+		return err
+	}
+
+	// записываем буфер в файл
+	return p.writer.Flush()
+}
+
+func (p *Producer) WriteEvents(events *[]model.Event) error {
+	data, err := json.MarshalIndent(events, "", "")
+	if err != nil {
+		return err
+	}
+
+	// записываем событие в буфер
+	if _, err := p.writer.Write(data); err != nil {
 		return err
 	}
 
@@ -85,6 +101,23 @@ func (c *Consumer) ReadEvent() (*model.Event, error) {
 	}
 	return &event, nil
 }
+
+func (c *Consumer) ReadEvents() (*[]model.Event, error) {
+	// читаем данные до символа переноса строки
+	data, err := io.ReadAll(c.reader)
+	if err != nil {
+		return nil, err
+	}
+
+	// преобразуем данные из JSON-представления в структуру
+	var events []model.Event
+	err = json.Unmarshal(data, &events)
+	if err != nil {
+		return nil, err
+	}
+	return &events, nil
+}
+
 func (c *Consumer) Close() {
 	c.file.Close()
 }

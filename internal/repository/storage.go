@@ -32,13 +32,17 @@ func (s *SafeMap) SetData(shortURL string, originalURL string) {
 	if _, ok := s.m[shortURL]; !ok {
 		s.m[shortURL] = newEvent
 		s.counter++
-		// запишем событие в файл
+		// перезапишем файл с новым событием
 		p, err := NewProducer(config.ConfigAdreses.JSONFile) // создаем новый продюсер для записи в файл
 		if err != nil {
 			logger.Log.Errorln("error while file opening (Producer)")
 		}
 		defer p.Close() // закроем файл при выходе из функции
-		p.WriteEvent(&newEvent)
+		var dataSlice []model.Event
+		for _, el := range s.m {
+			dataSlice = append(dataSlice, el)
+		}
+		p.WriteEvents(&dataSlice)
 	} else {
 		logger.Log.Infoln("URL", originalURL, "already exist in storage")
 	}
@@ -64,16 +68,14 @@ func (s *SafeMap) ReadDataFromFile() {
 		logger.Log.Errorln("error while file opening (Consumer)")
 	}
 	defer c.Close()
-	var e *model.Event
 
-	for {
-		if e, err = c.ReadEvent(); err != nil {
-			logger.Log.Infoln("EOF")
-			break
-		} else {
+	events, err := c.ReadEvents()
+	if err != nil {
+		logger.Log.Infow("file is empty (Consumer)")
+	} else {
+		for _, event := range *events {
 			s.mu.Lock() // Блокировка на запись
-			s.m[e.ShortURL] = *e
-			s.counter = e.ID + 1
+			s.m[event.ShortURL] = event
 			s.mu.Unlock()
 		}
 	}
