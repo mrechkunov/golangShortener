@@ -7,14 +7,14 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestInsertData(t *testing.T) {
+func TestSafeSlice_SetData(t *testing.T) {
 	tests := []struct {
 		name string // description of this test case
 		// Named input parameters for target function.
 		url      string
 		shortURL string
 	}{
-		{"Valid name", "http://test.test", "http://test.short"},
+		{"Valid name", "http://test.test1", "http://test.short"},
 		{"Empty name", "", ""},
 	}
 	for _, tt := range tests {
@@ -24,14 +24,14 @@ func TestInsertData(t *testing.T) {
 	}
 }
 
-func TestSelectData(t *testing.T) {
+func TestSafeSlice_GetData(t *testing.T) {
 	tests := []struct {
 		name string // description of this test case
 		// Named input parameters for target function.
 		shortURL string
 		want     string
 	}{
-		{"Valid name", "http://test.test", "http://test.test"},
+		{"Valid name", "http://test.test2", "http://test.test2"},
 		{"Empty name", "", ""},
 		// TODO: Add test cases.
 	}

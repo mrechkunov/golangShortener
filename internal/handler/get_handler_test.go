@@ -4,6 +4,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/mrechkunov/golangShortener.git/internal/handler"
@@ -21,10 +22,22 @@ func TestGetHandler(t *testing.T) {
 		name        string // наименовение теста
 		want        want   // ожидаемый результат
 		reqEndPoint string // точка входа
+		body        string // request body
 	}{
 		{
 			name:        "Bad request test",
 			reqEndPoint: "/badRequest",
+			body:        "ya.ru",
+			want: want{
+				code:        400,
+				response:    "short URL not found\n",
+				contentType: "text/plain; charset=utf-8",
+			},
+		},
+		{
+			name:        "test not found",
+			reqEndPoint: "/",
+			body:        "",
 			want: want{
 				code:        400,
 				response:    "short URL not found\n",
@@ -34,16 +47,17 @@ func TestGetHandler(t *testing.T) {
 		// {
 		// 	name:        "positive test",
 		// 	reqEndPoint: "/",
+		// 	body:        "ya.ru",
 		// 	want: want{
 		// 		code:        307,
-		// 		response:    "short URL not found\n",
+		// 		response:    "http://localhost:8080/7c4e7828",
 		// 		contentType: "text/plain; charset=utf-8",
 		// 	},
 		// },
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			request := httptest.NewRequest(http.MethodGet, tt.reqEndPoint, nil)
+			request := httptest.NewRequest(http.MethodGet, tt.reqEndPoint, strings.NewReader(tt.body))
 			//создаем новый Recorder
 			w := httptest.NewRecorder()
 			handler.GetHandler(w, request)

@@ -11,7 +11,6 @@ func GetHandler(res http.ResponseWriter, req *http.Request) {
 		http.Error(res, "Only GET requests are allowed!", http.StatusBadRequest)
 		return
 	}
-
 	shortURL := string(req.RequestURI)
 	shortURL = shortURL[1:]
 	longURL, isFound := repository.Storage.GetData(shortURL)
