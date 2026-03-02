@@ -4,6 +4,7 @@ go 1.24.12
 
 require (
 	github.com/go-chi/chi/v5 v5.2.4
+	github.com/golang-migrate/migrate/v4 v4.19.1
 	github.com/jackc/pgx v3.6.2+incompatible
 	github.com/stretchr/testify v1.11.1
 	go.uber.org/zap v1.27.1
@@ -11,13 +12,13 @@ require (
 
 require (
 	github.com/cockroachdb/apd v1.1.0 // indirect
-	github.com/davecgh/go-spew v1.1.1 // indirect
+	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/gofrs/uuid v4.4.0+incompatible // indirect
 	github.com/jackc/fake v0.0.0-20150926172116-812a484cc733 // indirect
 	github.com/kr/pretty v0.3.0 // indirect
 	github.com/lib/pq v1.11.2 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
-	github.com/pmezard/go-difflib v1.0.0 // indirect
+	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/rogpeppe/go-internal v1.14.1 // indirect
 	github.com/shopspring/decimal v1.4.0 // indirect
 	go.uber.org/multierr v1.10.0 // indirect

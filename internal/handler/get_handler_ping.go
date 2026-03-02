@@ -11,7 +11,7 @@ func GetHandlerPingDB(res http.ResponseWriter, req *http.Request) {
 		http.Error(res, "Only GET requests are allowed!", http.StatusBadRequest)
 		return
 	}
-	_, err := db.Connect()
+	_, err := db.NewConnect()
 	if err != nil {
 		http.Error(res, "Internal Server Error", http.StatusInternalServerError)
 	} else {
