@@ -15,6 +15,9 @@ type Adreses struct {
 var ConfigAdreses = Adreses{
 	ServerBindAdress:   "localhost:8080",
 	ResultServerAdress: "http://localhost:8080", // для работы unit теста
+	JSONFile:           "",
+	DBConnStr:          "",
+
 	// JSONFile:           "file.txt",
 	// DBConnStr:          "host=10.254.40.123 user=yapra password=yaprapass dbname=yandexpracticum sslmode=disable",
 }
