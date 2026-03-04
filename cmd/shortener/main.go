@@ -7,14 +7,13 @@ import (
 	"github.com/mrechkunov/golangShortener.git/internal/config"
 	"github.com/mrechkunov/golangShortener.git/internal/handler"
 	"github.com/mrechkunov/golangShortener.git/internal/logger"
-	"github.com/mrechkunov/golangShortener.git/internal/repository"
 )
 
 func main() {
 	config.Init()
 	defer logger.Log.Sync() // закрываем логгер при выходе из main
 	logger.Log.Infoln("Reading config")
-	repository.Storage.ReadDataFromFile()
+	//repository.Storage.ReadDataFromFile()
 	r := chi.NewRouter()
 	r.Post("/", logger.WithLogging(gzipMiddleware(handler.PostHandler)))
 	r.Post("/api/shorten", logger.WithLogging(gzipMiddleware(handler.JSONPostHandler)))
