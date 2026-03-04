@@ -3,6 +3,7 @@ package config
 import (
 	"flag"
 	"os"
+	"testing"
 )
 
 type Adreses struct {
@@ -23,6 +24,7 @@ var ConfigAdreses = Adreses{
 }
 
 func Init() {
+	testing.Init()
 	ba := flag.String("a", "localhost:8080", "adress to server run")
 	ra := flag.String("b", "http://localhost:8080", "default responce server adress")
 	jf := flag.String("f", "", "default storage file")
