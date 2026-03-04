@@ -17,7 +17,7 @@ func StorageInit() Stor {
 		//var Storage *SafeMapDB = NewSafeMapDB()
 		//Storage = NewSafeMapFile()
 	} else if config.ConfigAdreses.JSONFile != "" {
-		var Storage *SafeMapFile = NewSafeMapFile()
+		var Storage = NewSafeMapFile()
 		Storage.ReadDataFromFile()
 	} else {
 		Storage = NewSafeMap()
