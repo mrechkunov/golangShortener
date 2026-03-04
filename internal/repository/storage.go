@@ -1,6 +1,8 @@
 package repository
 
 import (
+	"fmt"
+
 	"github.com/mrechkunov/golangShortener.git/internal/config"
 	"github.com/mrechkunov/golangShortener.git/internal/logger"
 )
@@ -20,12 +22,11 @@ func StorageInit() Stor {
 		//var Storage *SafeMapDB = NewSafeMapDB()
 		//Storage = NewSafeMapFile()
 	} else if config.ConfigAdreses.JSONFile != "" {
-		var Storage = NewSafeMapFile()
-		Storage.ReadDataFromFile()
-		logger.Log.Infow("work with file", config.ConfigAdreses.JSONFile)
+		Storage = NewSafeMapFile()
+		fmt.Println("work with file", config.ConfigAdreses.JSONFile)
 	} else {
 		Storage = NewSafeMap()
-		logger.Log.Infow("work with memory")
+		fmt.Println("work with memory")
 	}
 	return Storage
 }

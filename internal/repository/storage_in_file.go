@@ -132,13 +132,16 @@ type SafeMapFile struct {
 }
 
 func NewSafeMapFile() *SafeMapFile {
-	return &SafeMapFile{
+	var s = SafeMapFile{
 		m:       make(map[string]model.Event),
 		counter: 1,
 	}
+	s.ReadDataFromFile()
+	return &s
 }
 
 func (s *SafeMapFile) SetData(shortURL string, originalURL string) {
+	logger.Log.Infoln("Set Data file")
 	s.mu.Lock() // Блокировка на запись
 	defer s.mu.Unlock()
 	newEvent := model.Event{
@@ -167,6 +170,7 @@ func (s *SafeMapFile) SetData(shortURL string, originalURL string) {
 }
 
 func (s *SafeMapFile) GetData(shortURL string) (string, bool) {
+	logger.Log.Infoln("Get Data file")
 	s.mu.RLock() // Блокировка на чтение
 	defer s.mu.RUnlock()
 	if val, ok := s.m[shortURL]; !ok {
