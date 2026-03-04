@@ -10,7 +10,7 @@ import (
 )
 
 func main() {
-	config.Init()
+
 	defer logger.Log.Sync() // закрываем логгер при выходе из main
 	logger.Log.Infoln("Reading config")
 
