@@ -19,7 +19,7 @@ func StorageInit() Stor {
 	var Storage Stor
 	if config.ConfigAdreses.DBConnStr != "" {
 		logger.Log.Infow("work with DB")
-		//var Storage *SafeMapDB = NewSafeMapDB()
+		Storage = NewSafeMapDB()
 		//Storage = NewSafeMapFile()
 	} else if config.ConfigAdreses.JSONFile != "" {
 		Storage = NewSafeMapFile()

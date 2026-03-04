@@ -1,7 +1,7 @@
 -- migrations/000001_create_storage_table.up.sql
 -- Создание таблицы ссылок
 CREATE TABLE IF NOT EXISTS storage (
-    shortURL VARVHAR(255) PRIMARY KEY,
+    shortURL VARCHAR(255) PRIMARY KEY,
     originalURL VARCHAR(255) NOT NULL,
     uuid INTEGER NOT NULL
 );

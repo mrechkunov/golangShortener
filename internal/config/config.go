@@ -28,9 +28,9 @@ func Init() {
 	ba := flag.String("a", "localhost:8080", "adress to server run")
 	ra := flag.String("b", "http://localhost:8080", "default responce server adress")
 	jf := flag.String("f", "", "default storage file")
-	cs := flag.String("d", "", "default DBConnStr")
+	//cs := flag.String("d", "", "default DBConnStr")
 	//jf := flag.String("f", "file.txt", "default storage file")
-	//cs := flag.String("d", "host=10.254.40.123 user=yaPra password=YaPra dbname=yandexpracticum sslmode=disable", "default DBConnStr")
+	cs := flag.String("d", "postgres://yapra:yaprapass@10.254.40.123:5432/yandexpracticum?sslmode=disable", "default DBConnStr")
 	flag.Parse()
 
 	// если переиенные окружения установленны, берем их, иначе берем флаг
