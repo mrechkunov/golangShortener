@@ -4,12 +4,11 @@ import (
 	"github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
 	"github.com/mrechkunov/golangShortener.git/internal/config"
-	"github.com/mrechkunov/golangShortener.git/internal/config/db"
 	"github.com/mrechkunov/golangShortener.git/internal/logger"
 )
 
 func SetData(shortURL string, originalURL string) {
-	db, err := db.NewConnect()
+	db, err := NewConnect()
 	//_, err := db.NewConnect()
 	if err != nil {
 		logger.Log.Errorln("error while db connection")

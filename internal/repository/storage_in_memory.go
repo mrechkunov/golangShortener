@@ -58,8 +58,6 @@ func (s *SafeMap) GetData(shortURL string) (string, bool) {
 	}
 }
 
-var Storage *SafeMap = NewSafeMap()
-
 // func (s *SafeMap) ReadDataFromFile() {
 // 	if config.ConfigAdreses.JSONFile == "" {
 // 		logger.Log.Errorln("no file setup (Consumer)")

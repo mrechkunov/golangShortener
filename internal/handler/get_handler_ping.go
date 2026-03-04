@@ -3,7 +3,7 @@ package handler
 import (
 	"net/http"
 
-	"github.com/mrechkunov/golangShortener.git/internal/config/db"
+	"github.com/mrechkunov/golangShortener.git/internal/repository"
 )
 
 func GetHandlerPingDB(res http.ResponseWriter, req *http.Request) {
@@ -11,7 +11,7 @@ func GetHandlerPingDB(res http.ResponseWriter, req *http.Request) {
 		http.Error(res, "Only GET requests are allowed!", http.StatusBadRequest)
 		return
 	}
-	_, err := db.NewConnect()
+	_, err := repository.NewConnect()
 	if err != nil {
 		http.Error(res, "Internal Server Error", http.StatusInternalServerError)
 	} else {
