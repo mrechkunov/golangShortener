@@ -22,7 +22,7 @@ func NewDB() *DB {
 	}
 	defer db.Close()
 
-	migrationsPath := "file://../../migrations"
+	migrationsPath := "file://migrations"
 
 	m, err := migrate.New(
 		migrationsPath,
@@ -73,7 +73,7 @@ func (d *DB) SetData(shortURL string, originalURL string) {
 
 }
 
-func (s *DB) GetData(shortURL string) (string, bool) {
+func (d *DB) GetData(shortURL string) (string, bool) {
 	db, err := NewConnect()
 	if err != nil {
 		logger.Log.Errorln("error while db connection")
