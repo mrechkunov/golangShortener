@@ -29,13 +29,16 @@ func JSONPostHandler(w http.ResponseWriter, r *http.Request) {
 
 	var resp model.ResponseData
 	resp.ShortURL = ShortURL
-
+	// пишем в хранилище
+	err := repository.GetStorage().SetData(hex.EncodeToString(hash[:4]), req.URL)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
 	//формируем заголовок ответа
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 	//записываем ответ
 	json.NewEncoder(w).Encode(resp)
-	// пишем в хранилище
-	//repository.Storage.SetData(hex.EncodeToString(hash[:4]), string(req.URL))
-	repository.GetStorage().SetData(hex.EncodeToString(hash[:4]), req.URL)
+
 }

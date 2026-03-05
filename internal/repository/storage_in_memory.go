@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"errors"
 	"sync"
 
 	"github.com/mrechkunov/golangShortener.git/internal/model"
@@ -19,7 +20,7 @@ func NewSafeMap() *SafeMap {
 	}
 }
 
-func (s *SafeMap) SetData(shortURL string, originalURL string) {
+func (s *SafeMap) SetData(shortURL string, originalURL string) error {
 	s.mu.Lock() // Блокировка на запись
 	defer s.mu.Unlock()
 	newEvent := model.Event{
@@ -30,21 +31,10 @@ func (s *SafeMap) SetData(shortURL string, originalURL string) {
 	if _, ok := s.m[shortURL]; !ok {
 		s.m[shortURL] = newEvent
 		s.counter++
-		// 	// перезапишем файл с новым событием
-		// 	p, err := NewProducer(config.ConfigAdreses.JSONFile) // создаем новый продюсер для записи в файл
-		// 	if err != nil {
-		// 		logger.Log.Errorln("error while file opening (Producer)")
-		// 	}
-		// 	defer p.Close() // закроем файл при выходе из функции
-		// 	var dataSlice []model.Event
-		// 	for _, el := range s.m {
-		// 		dataSlice = append(dataSlice, el)
-		// 	}
-		// 	p.WriteEvents(&dataSlice)
-		// } else {
-		// 	logger.Log.Infoln("URL", originalURL, "already exist in storage")
+	} else {
+		return errors.New("short url already exist")
 	}
-
+	return nil
 }
 
 func (s *SafeMap) GetData(shortURL string) (string, bool) {

@@ -7,7 +7,7 @@ import (
 
 type StorageI interface {
 	GetData(shortURL string) (string, bool)
-	SetData(shortURL string, originalURL string)
+	SetData(shortURL string, originalURL string) error
 	Close() error
 }
 

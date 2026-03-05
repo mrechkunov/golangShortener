@@ -3,6 +3,7 @@ package repository
 import (
 	"bufio"
 	"encoding/json"
+	"errors"
 	"io"
 	"os"
 	"sync"
@@ -140,7 +141,7 @@ func NewSafeMapFile() *SafeMapFile {
 	return &s
 }
 
-func (s *SafeMapFile) SetData(shortURL string, originalURL string) {
+func (s *SafeMapFile) SetData(shortURL string, originalURL string) error {
 	logger.Log.Infoln("Set Data file")
 	s.mu.Lock() // Блокировка на запись
 	defer s.mu.Unlock()
@@ -165,8 +166,9 @@ func (s *SafeMapFile) SetData(shortURL string, originalURL string) {
 		p.WriteEvents(&dataSlice)
 	} else {
 		logger.Log.Infoln("URL", originalURL, "already exist in storage")
+		return errors.New("URLalready exist in storage")
 	}
-
+	return nil
 }
 
 func (s *SafeMapFile) GetData(shortURL string) (string, bool) {
