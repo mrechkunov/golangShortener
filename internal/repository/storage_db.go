@@ -52,11 +52,9 @@ func (d *DB) SetData(shortURL string, originalURL string) error {
 	if err != nil {
 		logger.Log.Fatal(err)
 	}
-
 	// проверяем есть ли такой URL в DB
 	var shortURLFromDB string
-	err = d.dbconn.QueryRow("select shorturl from storage where shorturl=$1", shortURL).Scan(
-		&shortURLFromDB)
+	d.dbconn.QueryRow("select shorturl from storage where shorturl=$1", shortURL).Scan(&shortURLFromDB)
 	if shortURLFromDB == shortURL {
 		logger.Log.Infoln("shortURL already exist in DB")
 	} else {
