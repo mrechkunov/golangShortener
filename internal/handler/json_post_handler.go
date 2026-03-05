@@ -37,5 +37,5 @@ func JSONPostHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(resp)
 	// пишем в хранилище
 	//repository.Storage.SetData(hex.EncodeToString(hash[:4]), string(req.URL))
-	repository.Storage.SetData(hex.EncodeToString(hash[:4]), req.URL)
+	repository.GetStorage().SetData(hex.EncodeToString(hash[:4]), req.URL)
 }

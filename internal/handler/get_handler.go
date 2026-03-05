@@ -13,7 +13,7 @@ func GetHandler(res http.ResponseWriter, req *http.Request) {
 	}
 	shortURL := string(req.RequestURI)
 	shortURL = shortURL[1:]
-	longURL, isFound := repository.Storage.GetData(shortURL)
+	longURL, isFound := repository.GetStorage().GetData(shortURL)
 	if !isFound {
 		http.Error(res, "short URL not found", http.StatusBadRequest)
 		return

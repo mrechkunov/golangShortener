@@ -203,3 +203,7 @@ func (s *SafeMapFile) ReadDataFromFile() {
 		}
 	}
 }
+
+func (s *SafeMapFile) Close() error {
+	return nil
+}

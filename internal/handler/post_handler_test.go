@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/mrechkunov/golangShortener.git/internal/handler"
+	"github.com/mrechkunov/golangShortener.git/internal/repository"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -46,6 +47,8 @@ func TestPostHandler(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			Storage := repository.StorageInit()
+			defer Storage.Close()
 			reqBody := strings.NewReader(tt.reqBody)
 			request := httptest.NewRequest(tt.method, "/", reqBody)
 			//создаем новый Recorder

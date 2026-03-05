@@ -11,7 +11,7 @@ import (
 )
 
 type DB struct {
-	db      *sql.DB
+	dbconn  *sql.DB
 	counter int
 }
 
@@ -20,7 +20,7 @@ func NewDB() *DB {
 	if err != nil {
 		logger.Log.Errorln("error while db connection")
 	}
-	defer db.Close()
+	//defer db.Close()
 
 	migrationsPath := "file://migrations"
 
@@ -44,20 +44,20 @@ func NewDB() *DB {
 	// 	logger.Log.Infoln("Error while select last id from DB", err)
 	// }
 	cnt++
-	var retDB = DB{
-		db:      db,
+	var retDB = &DB{
+		dbconn:  db,
 		counter: cnt,
 	}
-	return &retDB
+	return retDB
 }
 
 func (d *DB) SetData(shortURL string, originalURL string) {
-	db, err := NewConnect()
-	if err != nil {
-		logger.Log.Errorln("error while db connection")
-	}
-	defer db.Close()
-	err = db.Ping()
+	// db, err := NewConnect()
+	// if err != nil {
+	// 	logger.Log.Errorln("error while db connection")
+	// }
+	// defer db.Close()
+	err := d.dbconn.Ping()
 	if err != nil {
 		logger.Log.Fatal(err)
 	}
@@ -65,7 +65,7 @@ func (d *DB) SetData(shortURL string, originalURL string) {
 
 	sqlStatement := `INSERT INTO storage (uuid, originalurl, shorturl)
 		VALUES ($1, $2, $3)`
-	_, err = db.Exec(sqlStatement, d.counter, originalURL, shortURL)
+	_, err = d.dbconn.Exec(sqlStatement, d.counter, originalURL, shortURL)
 	if err != nil {
 		logger.Log.Errorln("error while insert to db", err)
 	}
@@ -74,22 +74,25 @@ func (d *DB) SetData(shortURL string, originalURL string) {
 }
 
 func (d *DB) GetData(shortURL string) (string, bool) {
-	db, err := NewConnect()
-	if err != nil {
-		logger.Log.Errorln("error while db connection")
-	}
-	defer db.Close()
-	err = db.Ping()
+	// db, err := NewConnect()
+	// if err != nil {
+	// 	logger.Log.Errorln("error while db connection")
+	// }
+	// defer db.Close()
+	err := d.dbconn.Ping()
 	if err != nil {
 		logger.Log.Fatal(err)
 	}
 	var res string
 	logger.Log.Infoln("Successfully connected to the database!")
-	err = db.QueryRow("select originalurl from storage where shorturl=$1", shortURL).Scan(
+	err = d.dbconn.QueryRow("select originalurl from storage where shorturl=$1", shortURL).Scan(
 		&res)
 	isFound := true
 	if err != nil {
 		isFound = false
 	}
 	return res, isFound
+}
+func (d *DB) Close() error {
+	return d.dbconn.Close()
 }

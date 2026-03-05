@@ -7,10 +7,13 @@ import (
 	"github.com/mrechkunov/golangShortener.git/internal/config"
 	"github.com/mrechkunov/golangShortener.git/internal/handler"
 	"github.com/mrechkunov/golangShortener.git/internal/logger"
+	"github.com/mrechkunov/golangShortener.git/internal/repository"
 )
 
 func main() {
-	//config.Init()
+	config.Init()
+	Storage := repository.StorageInit()
+	defer Storage.Close()
 	defer logger.Log.Sync() // закрываем логгер при выходе из main
 	logger.Log.Infoln("Reading config")
 

@@ -57,26 +57,6 @@ func (s *SafeMap) GetData(shortURL string) (string, bool) {
 		return originalURL, true
 	}
 }
-
-// func (s *SafeMap) ReadDataFromFile() {
-// 	if config.ConfigAdreses.JSONFile == "" {
-// 		logger.Log.Errorln("no file setup (Consumer)")
-// 	} else {
-// 		c, err := NewConsumer(config.ConfigAdreses.JSONFile)
-// 		if err != nil {
-// 			logger.Log.Errorln("error while file opening (Consumer)")
-// 		}
-// 		defer c.Close()
-
-// 		events, err := c.ReadEvents()
-// 		if err != nil {
-// 			logger.Log.Infow("file is empty (Consumer)")
-// 		} else {
-// 			for _, event := range *events {
-// 				s.mu.Lock() // Блокировка на запись
-// 				s.m[event.ShortURL] = event
-// 				s.mu.Unlock()
-// 			}
-// 		}
-// 	}
-// }
+func (s *SafeMap) Close() error {
+	return nil
+}

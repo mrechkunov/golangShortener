@@ -9,6 +9,7 @@ import (
 
 	"github.com/mrechkunov/golangShortener.git/internal/handler"
 	"github.com/mrechkunov/golangShortener.git/internal/model"
+	"github.com/mrechkunov/golangShortener.git/internal/repository"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -47,6 +48,8 @@ func TestJSONPostHandler(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			Storage := repository.StorageInit()
+			defer Storage.Close()
 			requestBody := model.RequestBody{URL: tt.reqBody}
 			body, err := json.Marshal(requestBody)
 			if err != nil {
