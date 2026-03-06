@@ -45,16 +45,6 @@ func TestGetHandler(t *testing.T) {
 				contentType: "text/plain; charset=utf-8",
 			},
 		},
-		// {
-		// 	name:        "positive test",
-		// 	reqEndPoint: "/",
-		// 	body:        "ya.ru",
-		// 	want: want{
-		// 		code:        307,
-		// 		response:    "http://localhost:8080/7c4e7828",
-		// 		contentType: "text/plain; charset=utf-8",
-		// 	},
-		// },
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
