@@ -29,14 +29,17 @@ func PostHandler(res http.ResponseWriter, req *http.Request) {
 	shortURL := baseResultAdress + "/" + hex.EncodeToString(hash[:4]) // 4 байта хеша = 8 символов в hex
 	err = repository.GetStorage().SetData(hex.EncodeToString(hash[:4]), string(body))
 	if err != nil {
+		res.Header().Set("content-type", "text/plain; charset=utf-8")
+		res.Header().Set("Content-Length", strconv.Itoa(len(shortURL)))
 		res.WriteHeader(http.StatusConflict)
+		//записываем ответ
+		res.Write([]byte(shortURL))
 		return
 	}
 	//формируем заголовок ответа
 	res.Header().Set("content-type", "text/plain; charset=utf-8")
 	res.Header().Set("Content-Length", strconv.Itoa(len(shortURL)))
 	res.WriteHeader(http.StatusCreated)
-
 	//записываем ответ
 	res.Write([]byte(shortURL))
 

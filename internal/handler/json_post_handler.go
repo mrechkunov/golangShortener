@@ -32,7 +32,11 @@ func JSONPostHandler(w http.ResponseWriter, r *http.Request) {
 	// пишем в хранилище
 	err := repository.GetStorage().SetData(hex.EncodeToString(hash[:4]), req.URL)
 	if err != nil {
+		//формируем заголовок ответа
+		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusConflict)
+		//записываем ответ
+		json.NewEncoder(w).Encode(resp)
 		return
 	}
 	//формируем заголовок ответа
