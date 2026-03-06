@@ -27,18 +27,23 @@ func JSONBatchPostHandler(w http.ResponseWriter, r *http.Request) {
 
 	// пройтись по структуре, сократить ссылки в новую структуру, добавить данные в хранилище
 	var responseBatch []model.ResponseDataBatch
+	var errconfl error
 	for _, reqBatchElement := range requestBatch {
 		var resBatchElement model.ResponseDataBatch
 		resBatchElement.CorrelationID = reqBatchElement.CorrelationID
 		hash := sha256.Sum256([]byte(reqBatchElement.OriginalURL))
 		resBatchElement.ShortURL = baseResultAdress + "/" + hex.EncodeToString(hash[:4]) // 4 байта хеша = 8 символов в hex
 
-		err := repository.GetStorage().SetData(hex.EncodeToString(hash[:4]), reqBatchElement.OriginalURL)
-		if err != nil {
-			w.WriteHeader(http.StatusConflict)
-			return
-		}
+		errconfl = repository.GetStorage().SetData(hex.EncodeToString(hash[:4]), reqBatchElement.OriginalURL)
 		responseBatch = append(responseBatch, resBatchElement)
+	}
+	if errconfl != nil {
+		// формируем ответ
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusConflict)
+		// записываем ответ
+		json.NewEncoder(w).Encode(responseBatch)
+		return
 	}
 	// формируем ответ
 	w.Header().Set("Content-Type", "application/json")
