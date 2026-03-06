@@ -32,11 +32,11 @@ func PostHandler(res http.ResponseWriter, req *http.Request) {
 		res.WriteHeader(http.StatusConflict)
 		return
 	}
-
 	//формируем заголовок ответа
 	res.Header().Set("content-type", "text/plain; charset=utf-8")
 	res.Header().Set("Content-Length", strconv.Itoa(len(shortURL)))
 	res.WriteHeader(http.StatusCreated)
+
 	//записываем ответ
 	res.Write([]byte(shortURL))
 

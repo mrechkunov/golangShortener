@@ -2,6 +2,7 @@ package repository
 
 import (
 	"database/sql"
+	"errors"
 
 	"github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
@@ -57,10 +58,11 @@ func (d *DB) SetData(shortURL string, originalURL string) error {
 	d.dbconn.QueryRow("select shorturl from storage where shorturl=$1", shortURL).Scan(&shortURLFromDB)
 	if shortURLFromDB == shortURL {
 		logger.Log.Infoln("shortURL already exist in DB")
+		return errors.New("409 Conflict")
 	} else {
 		sqlStatement := `INSERT INTO storage (uuid, originalurl, shorturl)
 		VALUES ($1, $2, $3)`
-		_, err = d.dbconn.Exec(sqlStatement, d.counter, originalURL, shortURL)
+		_, err := d.dbconn.Exec(sqlStatement, d.counter, originalURL, shortURL)
 		if err != nil {
 			logger.Log.Errorln("error while insert to db", err)
 			return err

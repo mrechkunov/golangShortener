@@ -32,7 +32,7 @@ func (s *SafeMap) SetData(shortURL string, originalURL string) error {
 		s.m[shortURL] = newEvent
 		s.counter++
 	} else {
-		return errors.New("short url already exist")
+		return errors.New("409 Conflict")
 	}
 	return nil
 }

@@ -46,19 +46,3 @@ func JSONBatchPostHandler(w http.ResponseWriter, r *http.Request) {
 	// записываем ответ
 	json.NewEncoder(w).Encode(responseBatch)
 }
-
-// подготовить и отправить ответ
-
-//сокращаем url для всего батча
-// for req := range reqs{
-// hash := sha256.Sum256([]byte(req.original_url))
-// ShortURL := baseResultAdress + "/" + hex.EncodeToString(hash[:4]) // 4 байта хеша = 8 символов в hex
-
-// var resp []model.ResponseData
-// resp.ShortURL = ShortURL
-// // пишем в хранилище
-// err := repository.GetStorage().SetData(hex.EncodeToString(hash[:4]), req.URL)
-// if err != nil {
-// 	w.WriteHeader(http.StatusBadRequest)
-// 	return
-// }

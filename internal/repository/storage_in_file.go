@@ -166,7 +166,7 @@ func (s *SafeMapFile) SetData(shortURL string, originalURL string) error {
 		p.WriteEvents(&dataSlice)
 	} else {
 		logger.Log.Infoln("URL", originalURL, "already exist in storage")
-		return errors.New("URLalready exist in storage")
+		return errors.New("409 Conflict")
 	}
 	return nil
 }
