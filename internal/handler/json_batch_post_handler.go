@@ -35,7 +35,7 @@ func JSONBatchPostHandler(w http.ResponseWriter, r *http.Request) {
 
 		err := repository.GetStorage().SetData(hex.EncodeToString(hash[:4]), reqBatchElement.OriginalURL)
 		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
+			w.WriteHeader(http.StatusConflict)
 			return
 		}
 		responseBatch = append(responseBatch, resBatchElement)
