@@ -8,6 +8,7 @@ import (
 )
 
 func TestSafeSlice_SetData(t *testing.T) {
+	testing.Init()
 	tests := []struct {
 		name string // description of this test case
 		// Named input parameters for target function.
@@ -27,6 +28,7 @@ func TestSafeSlice_SetData(t *testing.T) {
 }
 
 func TestSafeSlice_GetData(t *testing.T) {
+	testing.Init()
 	tests := []struct {
 		name string // description of this test case
 		// Named input parameters for target function.

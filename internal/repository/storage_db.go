@@ -22,10 +22,8 @@ func NewDB() *DB {
 		logger.Log.Errorln("error while db connection")
 	}
 
-	migrationsPath := "file://migrations"
-
 	m, err := migrate.New(
-		migrationsPath,
+		config.ConfigAdreses.MigrationsPath,
 		config.ConfigAdreses.DBConnStr,
 	)
 	if err != nil {
@@ -37,6 +35,8 @@ func NewDB() *DB {
 	}
 	logger.Log.Infoln("Database migrations applied successfully!")
 	db.Ping()
+
+	// set DB struct (counter uuid & db conn)
 	var cnt int
 	_ = db.QueryRow("select uuid from storage order by uuid desc limit 1").Scan(
 		&cnt)
@@ -60,8 +60,7 @@ func (d *DB) SetData(shortURL string, originalURL string) error {
 		logger.Log.Infoln("shortURL already exist in DB")
 		return errors.New("409 Conflict")
 	} else {
-		sqlStatement := `INSERT INTO storage (uuid, originalurl, shorturl)
-		VALUES ($1, $2, $3)`
+		sqlStatement := `INSERT INTO storage (uuid, originalurl, shorturl) VALUES ($1, $2, $3)`
 		_, err := d.dbconn.Exec(sqlStatement, d.counter, originalURL, shortURL)
 		if err != nil {
 			logger.Log.Errorln("error while insert to db", err)

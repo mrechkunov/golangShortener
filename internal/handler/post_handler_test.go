@@ -13,6 +13,7 @@ import (
 )
 
 func TestPostHandler(t *testing.T) {
+	testing.Init()
 	type want struct {
 		code        int
 		response    string
@@ -55,7 +56,6 @@ func TestPostHandler(t *testing.T) {
 			w := httptest.NewRecorder()
 			handler.PostHandler(w, request)
 			res := w.Result()
-
 			// получаем и проверяем тело запроса
 			defer res.Body.Close()
 			resBody, err := io.ReadAll(res.Body)

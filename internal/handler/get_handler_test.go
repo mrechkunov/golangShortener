@@ -14,6 +14,7 @@ import (
 )
 
 func TestGetHandler(t *testing.T) {
+	testing.Init()
 	type want struct {
 		code        int
 		response    string

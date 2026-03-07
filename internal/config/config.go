@@ -3,12 +3,12 @@ package config
 import (
 	"flag"
 	"os"
-	"testing"
 )
 
 type Adreses struct {
 	ServerBindAdress   string
 	ResultServerAdress string
+	MigrationsPath     string
 	JSONFile           string
 	DBConnStr          string
 }
@@ -16,14 +16,15 @@ type Adreses struct {
 var ConfigAdreses = Adreses{
 	ServerBindAdress:   "localhost:8080",
 	ResultServerAdress: "http://localhost:8080", // для работы unit теста
-	JSONFile:           "",
-	DBConnStr:          "",
+
+	JSONFile:  "",
+	DBConnStr: "",
 }
 
 func Init() {
-	testing.Init()
 	ba := flag.String("a", "localhost:8080", "adress to server run")
 	ra := flag.String("b", "http://localhost:8080", "default responce server adress")
+	mp := flag.String("m", "file://migrations", "default migration PATH")
 	jf := flag.String("f", "", "default storage file")
 	cs := flag.String("d", "", "default DBConnStr")
 	//jf := flag.String("f", "file.txt", "default storage file")
@@ -41,6 +42,13 @@ func Init() {
 	} else {
 		ConfigAdreses.ResultServerAdress = *ra
 	}
+
+	if migratoinsPath, isEnvMigrationsPath := os.LookupEnv("MIGRATIONS_PATH"); isEnvMigrationsPath {
+		ConfigAdreses.MigrationsPath = migratoinsPath
+	} else {
+		ConfigAdreses.MigrationsPath = *mp
+	}
+
 	if fileStoragePath, isEnvJSONFile := os.LookupEnv("FILE_STORAGE_PATH"); isEnvJSONFile {
 		ConfigAdreses.JSONFile = fileStoragePath
 	} else {

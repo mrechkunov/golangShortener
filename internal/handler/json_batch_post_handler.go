@@ -7,11 +7,13 @@ import (
 	"net/http"
 
 	"github.com/mrechkunov/golangShortener.git/internal/config"
+	"github.com/mrechkunov/golangShortener.git/internal/logger"
 	"github.com/mrechkunov/golangShortener.git/internal/model"
 	"github.com/mrechkunov/golangShortener.git/internal/repository"
 )
 
 func JSONBatchPostHandler(w http.ResponseWriter, r *http.Request) {
+
 	baseResultAdress := config.ConfigAdreses.ResultServerAdress
 	if r.Method != http.MethodPost {
 		http.Error(w, "Only POST requests are allowed!", http.StatusBadRequest)
@@ -23,20 +25,30 @@ func JSONBatchPostHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
+
 	// проверить что пришел батч не пустой если пустой, ответить badrequest
+	if len(requestBatch) == 0 {
+		w.WriteHeader(http.StatusBadRequest)
+		logger.Log.Infoln("request batch is empty, lenght:", len(requestBatch))
+		return
+	}
 
 	// пройтись по структуре, сократить ссылки в новую структуру, добавить данные в хранилище
 	var responseBatch []model.ResponseDataBatch
-	var errconfl error
+	var errconfl error = nil
 	for _, reqBatchElement := range requestBatch {
 		var resBatchElement model.ResponseDataBatch
 		resBatchElement.CorrelationID = reqBatchElement.CorrelationID
 		hash := sha256.Sum256([]byte(reqBatchElement.OriginalURL))
 		resBatchElement.ShortURL = baseResultAdress + "/" + hex.EncodeToString(hash[:4]) // 4 байта хеша = 8 символов в hex
-
-		errconfl = repository.GetStorage().SetData(hex.EncodeToString(hash[:4]), reqBatchElement.OriginalURL)
+		if errconfl == nil {
+			errconfl = repository.GetStorage().SetData(hex.EncodeToString(hash[:4]), reqBatchElement.OriginalURL)
+		} else {
+			repository.GetStorage().SetData(hex.EncodeToString(hash[:4]), reqBatchElement.OriginalURL)
+		}
 		responseBatch = append(responseBatch, resBatchElement)
 	}
+
 	if errconfl != nil {
 		// формируем ответ
 		w.Header().Set("Content-Type", "application/json")
