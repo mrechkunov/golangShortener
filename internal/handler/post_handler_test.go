@@ -7,11 +7,13 @@ import (
 	"testing"
 
 	"github.com/mrechkunov/golangShortener.git/internal/handler"
+	"github.com/mrechkunov/golangShortener.git/internal/repository"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestPostHandler(t *testing.T) {
+	testing.Init()
 	type want struct {
 		code        int
 		response    string
@@ -46,13 +48,14 @@ func TestPostHandler(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			Storage := repository.StorageInit()
+			defer Storage.Close()
 			reqBody := strings.NewReader(tt.reqBody)
 			request := httptest.NewRequest(tt.method, "/", reqBody)
 			//создаем новый Recorder
 			w := httptest.NewRecorder()
 			handler.PostHandler(w, request)
 			res := w.Result()
-
 			// получаем и проверяем тело запроса
 			defer res.Body.Close()
 			resBody, err := io.ReadAll(res.Body)

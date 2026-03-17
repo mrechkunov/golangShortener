@@ -8,6 +8,7 @@ import (
 )
 
 func TestSafeSlice_SetData(t *testing.T) {
+	testing.Init()
 	tests := []struct {
 		name string // description of this test case
 		// Named input parameters for target function.
@@ -19,12 +20,15 @@ func TestSafeSlice_SetData(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			repository.Storage.SetData(tt.url, tt.shortURL)
+			Storage := repository.StorageInit()
+			defer Storage.Close()
+			repository.GetStorage().SetData(tt.url, tt.shortURL)
 		})
 	}
 }
 
 func TestSafeSlice_GetData(t *testing.T) {
+	testing.Init()
 	tests := []struct {
 		name string // description of this test case
 		// Named input parameters for target function.
@@ -37,8 +41,10 @@ func TestSafeSlice_GetData(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			repository.Storage.SetData(tt.want, tt.shortURL)
-			got, _ := repository.Storage.GetData(tt.shortURL)
+			Storage := repository.StorageInit()
+			defer Storage.Close()
+			repository.GetStorage().SetData(tt.want, tt.shortURL)
+			got, _ := repository.GetStorage().GetData(tt.shortURL)
 
 			// TODO: update the condition below to compare got with tt.want.
 			if !assert.Equal(t, tt.want, got) {

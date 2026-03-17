@@ -8,11 +8,13 @@ import (
 	"testing"
 
 	"github.com/mrechkunov/golangShortener.git/internal/handler"
+	"github.com/mrechkunov/golangShortener.git/internal/repository"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestGetHandler(t *testing.T) {
+	testing.Init()
 	type want struct {
 		code        int
 		response    string
@@ -44,19 +46,11 @@ func TestGetHandler(t *testing.T) {
 				contentType: "text/plain; charset=utf-8",
 			},
 		},
-		// {
-		// 	name:        "positive test",
-		// 	reqEndPoint: "/",
-		// 	body:        "ya.ru",
-		// 	want: want{
-		// 		code:        307,
-		// 		response:    "http://localhost:8080/7c4e7828",
-		// 		contentType: "text/plain; charset=utf-8",
-		// 	},
-		// },
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			Storage := repository.StorageInit()
+			defer Storage.Close()
 			request := httptest.NewRequest(http.MethodGet, tt.reqEndPoint, strings.NewReader(tt.body))
 			//создаем новый Recorder
 			w := httptest.NewRecorder()
