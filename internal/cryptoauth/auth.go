@@ -31,19 +31,6 @@ func GenerateNewCookie() string {
 	return hex.EncodeToString(result)
 }
 
-// return signed UID
-// func SignUID(uid []byte) (string, error) {
-// 	h := hmac.New(sha256.New, []byte(secretKey))
-// 	_, err := h.Write(uid)
-// 	if err != nil {
-// 		fmt.Println("error while sign UID", err)
-// 		return "", err
-// 	}
-// 	sign := h.Sum(nil)
-// 	result := append(uid, sign...)
-// 	return hex.EncodeToString(result), err
-// }
-
 // validate cookie signature
 func ValidateCookieSign(cookie string) (bool, error) {
 	h := hmac.New(sha256.New, []byte(secretKey))
