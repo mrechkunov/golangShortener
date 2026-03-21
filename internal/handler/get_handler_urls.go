@@ -62,6 +62,7 @@ func GetHandlerURLs(res http.ResponseWriter, req *http.Request) {
 		http.SetCookie(res, cookie)
 		return
 	}
+
 	// Выбрать из хранилища все записи с uid
 	baseResultAdress := config.ConfigAdreses.ResultServerAdress
 	responseBatch := repository.GetStorage().GetDataByUID(uid)
@@ -76,11 +77,16 @@ func GetHandlerURLs(res http.ResponseWriter, req *http.Request) {
 	for _, rb := range responseBatch {
 		rb.ShortURL = baseResultAdress + "/" + rb.ShortURL
 	}
+	cookie = &http.Cookie{
+		Name:     cookieName,
+		Value:    cookie.Value,
+		Expires:  time.Now().Add(24 * time.Hour),
+		HttpOnly: true,
+	}
 
-	// формируем ответ
 	http.SetCookie(res, cookie)
-	res.Header().Set("Content-Type", "application/json")
-	res.WriteHeader(http.StatusOK)
+	//res.Header().Set("Content-Type", "application/json")
+	//res.WriteHeader(http.StatusOK)
 	// записываем ответ
 	json.NewEncoder(res).Encode(responseBatch)
 }
