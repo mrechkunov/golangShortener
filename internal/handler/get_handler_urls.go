@@ -46,6 +46,7 @@ func GetHandlerURLs(res http.ResponseWriter, req *http.Request) {
 	responseBatch := repository.GetStorage().GetDataByUID(uid)
 	if len(responseBatch) == 0 {
 		res.WriteHeader(http.StatusNoContent)
+		http.SetCookie(res, cookie)
 		return
 	}
 	for _, rb := range responseBatch {
