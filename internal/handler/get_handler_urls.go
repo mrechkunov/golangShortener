@@ -28,17 +28,15 @@ func GetHandlerURLs(res http.ResponseWriter, req *http.Request) {
 		isExist = repository.GetStorage().IsCookieExist(cookie.Value)
 		isValid, _ = cryptoauth.ValidateCookieSign(cookie.Value)
 	}
-	if !isExist {
-		http.Error(res, "cookie is not exist in storage", http.StatusUnauthorized)
-		return
-	}
 	if !isExist || !isValid {
+		http.Error(res, "cookie is not exist in storage", http.StatusUnauthorized)
 		cookie = &http.Cookie{
 			Name:     cookieName,
 			Value:    cryptoauth.GenerateNewCookie(),
 			Expires:  time.Now().Add(24 * time.Hour),
 			HttpOnly: true,
 		}
+
 	}
 	http.SetCookie(res, cookie)
 	uid, _ := cryptoauth.GetIDFromCookie(cookie.Value)
