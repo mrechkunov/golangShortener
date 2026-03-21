@@ -2,6 +2,7 @@ package handler
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -21,6 +22,7 @@ func GetHandlerURLs(res http.ResponseWriter, req *http.Request) {
 	var isExist, isValid bool
 	var cookie *http.Cookie
 	cookie, err := req.Cookie(cookieName)
+	fmt.Println("incomign cookie:", cookie)
 	if err != nil {
 		logger.Log.Infoln("cookie is not exist", err)
 		isExist = false
