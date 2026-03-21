@@ -98,8 +98,8 @@ func (d *DB) IsCookieExist(cookie string) bool {
 		logger.Log.Warnln(err)
 	}
 	var isFound bool
-	var res string
-	err = d.dbconn.QueryRow("select cookie from storage where cookie=$1", cookie).Scan(&res)
+	var queryres string
+	err = d.dbconn.QueryRow("select cookie from storage where cookie=$1", cookie).Scan(&queryres)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			isFound = false
@@ -107,8 +107,8 @@ func (d *DB) IsCookieExist(cookie string) bool {
 			logger.Log.Infoln(err)
 		}
 	} else {
-		if res == cookie {
-			logger.Log.Infoln("cookie is exist in DB", res)
+		if queryres == cookie {
+			logger.Log.Infoln("cookie is exist in DB", queryres)
 			isFound = true
 		}
 	}

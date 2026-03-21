@@ -2,7 +2,6 @@ package handler
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"time"
 
@@ -23,10 +22,8 @@ func GetHandlerURLs(res http.ResponseWriter, req *http.Request) {
 	var isExist, isValid bool
 	var cookie *http.Cookie
 	cookie, err := req.Cookie(cookieName)
-	fmt.Println("incoming cookie:", cookie)
-	fmt.Println("error:", err)
 	if err != nil {
-		logger.Log.Infoln("cookie is not exist", err)
+		logger.Log.Infoln("cookie is not exist in request", err)
 		isExist = false
 	} else {
 		isExist = repository.GetStorage().IsCookieExist(cookie.Value)
@@ -45,7 +42,6 @@ func GetHandlerURLs(res http.ResponseWriter, req *http.Request) {
 	}
 	if !isExist {
 		logger.Log.Infoln("cookie is not exist in storage")
-
 		cookie = &http.Cookie{
 			Name:     cookieName,
 			Value:    cryptoauth.GenerateNewCookie(),
@@ -73,32 +69,23 @@ func GetHandlerURLs(res http.ResponseWriter, req *http.Request) {
 	}
 
 	// Выбрать из хранилища все записи с uid
-	baseResultAdress := config.ConfigAdreses.ResultServerAdress
 	responseBatch := repository.GetStorage().GetDataByUID(uid)
-	// fmt.Println("len of responseBatch", len(responseBatch))
-	// if len(responseBatch) == 0 {
-	// 	fmt.Println("set 204")
-	// 	res.WriteHeader(http.StatusNoContent)
-	// 	fmt.Println("set coockie")
-	// 	http.SetCookie(res, cookie)
-	// 	return
-	// }
+	// добавляем всем префикс базового адреса
+	baseResultAdress := config.ConfigAdreses.ResultServerAdress
 	var result []model.ResponseDataBatchByCookie
 	for _, rb := range responseBatch {
 		rb.ShortURL = baseResultAdress + "/" + rb.ShortURL
 		result = append(result, rb)
 	}
-
 	cookie = &http.Cookie{
 		Name:     cookieName,
 		Value:    cookie.Value,
 		Expires:  time.Now().Add(24 * time.Hour),
 		HttpOnly: true,
 	}
-
+	// формируем и записываем ответ сервера
 	http.SetCookie(res, cookie)
 	res.Header().Set("Content-Type", "application/json")
 	res.WriteHeader(http.StatusOK)
-	// записываем ответ
 	json.NewEncoder(res).Encode(result)
 }

@@ -8,6 +8,8 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+
+	"github.com/mrechkunov/golangShortener.git/internal/logger"
 )
 
 var secretKey = "secret key"
@@ -30,24 +32,24 @@ func GenerateNewCookie() string {
 }
 
 // return signed UID
-func SignUID(uid []byte) (string, error) {
-	h := hmac.New(sha256.New, []byte(secretKey))
-	_, err := h.Write(uid)
-	if err != nil {
-		fmt.Println("error while sign UID", err)
-		return "", err
-	}
-	sign := h.Sum(nil)
-	result := append(uid, sign...)
-	return hex.EncodeToString(result), err
-}
+// func SignUID(uid []byte) (string, error) {
+// 	h := hmac.New(sha256.New, []byte(secretKey))
+// 	_, err := h.Write(uid)
+// 	if err != nil {
+// 		fmt.Println("error while sign UID", err)
+// 		return "", err
+// 	}
+// 	sign := h.Sum(nil)
+// 	result := append(uid, sign...)
+// 	return hex.EncodeToString(result), err
+// }
 
 // validate cookie signature
 func ValidateCookieSign(cookie string) (bool, error) {
 	h := hmac.New(sha256.New, []byte(secretKey))
 	data, err := hex.DecodeString(cookie)
 	if err != nil {
-		fmt.Println("error while decoding incoming UID", err)
+		logger.Log.Warnln("error while decoding incoming cookie", err)
 		return false, err
 	}
 	h.Write([]byte(data[:4]))
@@ -63,13 +65,8 @@ func ValidateCookieSign(cookie string) (bool, error) {
 func GetIDFromCookie(cookie string) (uint32, error) {
 	data, err := hex.DecodeString(cookie)
 	if err != nil {
-		fmt.Println("error while decoding incoming coockies", err)
+		fmt.Println("error while decoding incoming cookie", err)
 		return 0, err
 	}
 	return binary.BigEndian.Uint32(data[:4]), nil
 }
-
-// Выдавать пользователю симметрично подписанную куку, содержащую уникальный идентификатор
-// пользователя,
-// если такой куки не существует (надо хранить в storge куку)
-// или она не проходит проверку подлинности. (надо валидировать куку ключом)
