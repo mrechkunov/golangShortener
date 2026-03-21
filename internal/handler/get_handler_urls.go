@@ -9,6 +9,7 @@ import (
 	"github.com/mrechkunov/golangShortener.git/internal/config"
 	"github.com/mrechkunov/golangShortener.git/internal/cryptoauth"
 	"github.com/mrechkunov/golangShortener.git/internal/logger"
+	"github.com/mrechkunov/golangShortener.git/internal/model"
 	"github.com/mrechkunov/golangShortener.git/internal/repository"
 )
 
@@ -42,7 +43,7 @@ func GetHandlerURLs(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 	if !isExist {
-		http.Error(res, "cookie is not exist in storage", http.StatusNoContent)
+		http.Error(res, "cookie is not exist in storage", http.StatusOK)
 		cookie = &http.Cookie{
 			Name:     cookieName,
 			Value:    cryptoauth.GenerateNewCookie(),
@@ -76,9 +77,12 @@ func GetHandlerURLs(res http.ResponseWriter, req *http.Request) {
 	// 	http.SetCookie(res, cookie)
 	// 	return
 	// }
+	var result []model.ResponseDataBatchByCookie
 	for _, rb := range responseBatch {
 		rb.ShortURL = baseResultAdress + "/" + rb.ShortURL
+		result = append(result, rb)
 	}
+
 	cookie = &http.Cookie{
 		Name:     cookieName,
 		Value:    cookie.Value,
@@ -88,7 +92,7 @@ func GetHandlerURLs(res http.ResponseWriter, req *http.Request) {
 
 	http.SetCookie(res, cookie)
 	//res.Header().Set("Content-Type", "application/json")
-	//res.WriteHeader(http.StatusOK)
+	res.WriteHeader(http.StatusOK)
 	// записываем ответ
-	json.NewEncoder(res).Encode(responseBatch)
+	json.NewEncoder(res).Encode(result)
 }
