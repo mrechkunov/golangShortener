@@ -23,8 +23,8 @@ func GetHandlerURLs(res http.ResponseWriter, req *http.Request) {
 	var isExist, isValid bool
 	var cookie *http.Cookie
 	cookie, err := req.Cookie(cookieName)
-	fmt.Println("incomign cookie:", cookie)
-	fmt.Println("cookie.Value:", cookie.Value)
+	fmt.Println("incoming cookie:", cookie)
+	fmt.Println("error:", err)
 	if err != nil {
 		logger.Log.Infoln("cookie is not exist", err)
 		isExist = false
