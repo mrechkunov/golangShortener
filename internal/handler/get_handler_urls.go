@@ -29,7 +29,7 @@ func GetHandlerURLs(res http.ResponseWriter, req *http.Request) {
 		isValid, _ = cryptoauth.ValidateCookieSign(cookie.Value)
 	}
 	if !isValid {
-		http.Error(res, "cookie is not valid", http.StatusUnauthorized)
+		http.Error(res, "cookie is not valid", http.StatusNoContent)
 		cookie = &http.Cookie{
 			Name:     cookieName,
 			Value:    cryptoauth.GenerateNewCookie(),
@@ -50,8 +50,18 @@ func GetHandlerURLs(res http.ResponseWriter, req *http.Request) {
 		http.SetCookie(res, cookie)
 		return
 	}
-	uid, _ := cryptoauth.GetIDFromCookie(cookie.Value)
-
+	uid, err := cryptoauth.GetIDFromCookie(cookie.Value)
+	if err != nil {
+		http.Error(res, "no ID in cookie", http.StatusUnauthorized)
+		cookie = &http.Cookie{
+			Name:     cookieName,
+			Value:    cryptoauth.GenerateNewCookie(),
+			Expires:  time.Now().Add(24 * time.Hour),
+			HttpOnly: true,
+		}
+		http.SetCookie(res, cookie)
+		return
+	}
 	// Выбрать из хранилища все записи с uid
 	baseResultAdress := config.ConfigAdreses.ResultServerAdress
 	responseBatch := repository.GetStorage().GetDataByUID(uid)
