@@ -43,7 +43,7 @@ func GetHandlerURLs(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 	if !isExist {
-		http.Error(res, "cookie is not exist in storage", http.StatusOK)
+		http.Error(res, "cookie is not exist in storage", http.StatusUnauthorized)
 		cookie = &http.Cookie{
 			Name:     cookieName,
 			Value:    cryptoauth.GenerateNewCookie(),
@@ -51,6 +51,7 @@ func GetHandlerURLs(res http.ResponseWriter, req *http.Request) {
 			HttpOnly: true,
 		}
 		http.SetCookie(res, cookie)
+		res.Header().Set("Content-Type", "application/json")
 		return
 	}
 	uid, err := cryptoauth.GetIDFromCookie(cookie.Value)
