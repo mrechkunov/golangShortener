@@ -2,7 +2,6 @@ package handler
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"time"
 
@@ -29,35 +28,47 @@ func GetHandlerURLs(res http.ResponseWriter, req *http.Request) {
 		isExist = repository.GetStorage().IsCookieExist(cookie.Value)
 		isValid, _ = cryptoauth.ValidateCookieSign(cookie.Value)
 	}
-	if !isExist || !isValid {
-		http.Error(res, "cookie is not exist in storage", http.StatusUnauthorized)
+	if !isValid {
+		http.Error(res, "cookie is not valid", http.StatusUnauthorized)
 		cookie = &http.Cookie{
 			Name:     cookieName,
 			Value:    cryptoauth.GenerateNewCookie(),
 			Expires:  time.Now().Add(24 * time.Hour),
 			HttpOnly: true,
 		}
-
+		http.SetCookie(res, cookie)
+		return
 	}
-	http.SetCookie(res, cookie)
+	if !isExist {
+		http.Error(res, "cookie is not exist in storage", http.StatusNoContent)
+		cookie = &http.Cookie{
+			Name:     cookieName,
+			Value:    cryptoauth.GenerateNewCookie(),
+			Expires:  time.Now().Add(24 * time.Hour),
+			HttpOnly: true,
+		}
+		http.SetCookie(res, cookie)
+		return
+	}
 	uid, _ := cryptoauth.GetIDFromCookie(cookie.Value)
 
 	// Выбрать из хранилища все записи с uid
 	baseResultAdress := config.ConfigAdreses.ResultServerAdress
 	responseBatch := repository.GetStorage().GetDataByUID(uid)
-	fmt.Println("len of responseBatch", len(responseBatch))
-	if len(responseBatch) == 0 {
-		fmt.Println("set 204")
-		res.WriteHeader(http.StatusNoContent)
-		fmt.Println("set coockie")
-		http.SetCookie(res, cookie)
-		return
-	}
+	// fmt.Println("len of responseBatch", len(responseBatch))
+	// if len(responseBatch) == 0 {
+	// 	fmt.Println("set 204")
+	// 	res.WriteHeader(http.StatusNoContent)
+	// 	fmt.Println("set coockie")
+	// 	http.SetCookie(res, cookie)
+	// 	return
+	// }
 	for _, rb := range responseBatch {
 		rb.ShortURL = baseResultAdress + "/" + rb.ShortURL
 	}
 
 	// формируем ответ
+	http.SetCookie(res, cookie)
 	res.Header().Set("Content-Type", "application/json")
 	res.WriteHeader(http.StatusOK)
 	// записываем ответ
