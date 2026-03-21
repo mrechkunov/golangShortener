@@ -40,6 +40,7 @@ func GetHandlerURLs(res http.ResponseWriter, req *http.Request) {
 			HttpOnly: true,
 		}
 	}
+	http.SetCookie(res, cookie)
 	uid, _ := cryptoauth.GetIDFromCookie(cookie.Value)
 
 	// Выбрать из хранилища все записи с uid
