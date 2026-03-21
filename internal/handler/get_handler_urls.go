@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/mrechkunov/golangShortener.git/internal/config"
 	"github.com/mrechkunov/golangShortener.git/internal/cryptoauth"
 	"github.com/mrechkunov/golangShortener.git/internal/logger"
 	"github.com/mrechkunov/golangShortener.git/internal/repository"
@@ -42,12 +43,16 @@ func GetHandlerURLs(res http.ResponseWriter, req *http.Request) {
 	uid, _ := cryptoauth.GetIDFromCookie(cookie.Value)
 
 	// Выбрать из хранилища все записи с uid
-	//	baseResultAdress := config.ConfigAdreses.ResultServerAdress
+	baseResultAdress := config.ConfigAdreses.ResultServerAdress
 	responseBatch := repository.GetStorage().GetDataByUID(uid)
 	if len(responseBatch) == 0 {
 		res.WriteHeader(http.StatusNoContent)
 		return
 	}
+	for _, rb := range responseBatch {
+		rb.ShortURL = baseResultAdress + "/" + rb.ShortURL
+	}
+
 	// формируем ответ
 	res.Header().Set("Content-Type", "application/json")
 	res.WriteHeader(http.StatusOK)
