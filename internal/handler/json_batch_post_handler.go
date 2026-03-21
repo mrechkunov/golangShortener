@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/mrechkunov/golangShortener.git/internal/config"
+	"github.com/mrechkunov/golangShortener.git/internal/cryptoauth"
 	"github.com/mrechkunov/golangShortener.git/internal/logger"
 	"github.com/mrechkunov/golangShortener.git/internal/model"
 	"github.com/mrechkunov/golangShortener.git/internal/repository"
@@ -19,6 +20,16 @@ func JSONBatchPostHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Only POST requests are allowed!", http.StatusBadRequest)
 		return
 	}
+	//проверяем cookie если нет/не проходит проверку, выдаем новую
+	cookieName := "shorterner"
+	cookie, _ := r.Cookie(cookieName)
+	isExist := repository.GetStorage().IsCookieExist(cookie.Value)
+	isValid, _ := cryptoauth.ValidateCookieSign(cookie.Value)
+	if !isExist || !isValid {
+		cookie.Value = cryptoauth.GenerateNewCookie()
+	}
+	http.SetCookie(w, cookie)
+
 	// разобрать запрос в структуру
 	var requestBatch []model.RequestDataBatch
 	if err := json.NewDecoder(r.Body).Decode(&requestBatch); err != nil {
@@ -42,9 +53,9 @@ func JSONBatchPostHandler(w http.ResponseWriter, r *http.Request) {
 		hash := sha256.Sum256([]byte(reqBatchElement.OriginalURL))
 		resBatchElement.ShortURL = baseResultAdress + "/" + hex.EncodeToString(hash[:4]) // 4 байта хеша = 8 символов в hex
 		if errconfl == nil {
-			errconfl = repository.GetStorage().SetData(hex.EncodeToString(hash[:4]), reqBatchElement.OriginalURL)
+			errconfl = repository.GetStorage().SetData(hex.EncodeToString(hash[:4]), reqBatchElement.OriginalURL, cookie.Value)
 		} else {
-			repository.GetStorage().SetData(hex.EncodeToString(hash[:4]), reqBatchElement.OriginalURL)
+			repository.GetStorage().SetData(hex.EncodeToString(hash[:4]), reqBatchElement.OriginalURL, cookie.Value)
 		}
 		responseBatch = append(responseBatch, resBatchElement)
 	}

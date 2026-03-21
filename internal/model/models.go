@@ -19,7 +19,8 @@ type Event struct {
 	ID          int    `json:"uuid"`
 	ShortURL    string `json:"short_url"`
 	OriginalURL string `json:"original_url"`
-	UID         string `json:"user_id"`
+	UID         uint32 `json:"user_id"`
+	Cookie      string `json:"cookie"`
 }
 
 type RequestDataBatch struct {

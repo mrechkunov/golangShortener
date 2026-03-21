@@ -8,6 +8,7 @@ import (
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/mrechkunov/golangShortener.git/internal/config"
+	"github.com/mrechkunov/golangShortener.git/internal/cryptoauth"
 	"github.com/mrechkunov/golangShortener.git/internal/logger"
 )
 
@@ -48,7 +49,7 @@ func NewDB() *DB {
 	return retDB
 }
 
-func (d *DB) SetData(shortURL string, originalURL string) error {
+func (d *DB) SetData(shortURL string, originalURL string, cookie string) error {
 	err := d.dbconn.Ping()
 	if err != nil {
 		logger.Log.Fatal(err)
@@ -60,8 +61,9 @@ func (d *DB) SetData(shortURL string, originalURL string) error {
 		logger.Log.Infoln("shortURL already exist in DB")
 		return errors.New("409 Conflict")
 	} else {
-		sqlStatement := `INSERT INTO storage (uuid, originalurl, shorturl) VALUES ($1, $2, $3)`
-		_, err := d.dbconn.Exec(sqlStatement, d.counter, originalURL, shortURL)
+		uid, _ := cryptoauth.GetIDFromCookie(cookie)
+		sqlStatement := `INSERT INTO storage (count, uuid, originalurl, shorturl, cookie) VALUES ($1, $2, $3, $4, $5)`
+		_, err := d.dbconn.Exec(sqlStatement, d.counter, uid, originalURL, shortURL, cookie)
 		if err != nil {
 			logger.Log.Errorln("error while insert to db", err)
 			return err
@@ -72,15 +74,12 @@ func (d *DB) SetData(shortURL string, originalURL string) error {
 }
 
 func (d *DB) GetData(shortURL string) (string, bool) {
-
 	err := d.dbconn.Ping()
 	if err != nil {
 		logger.Log.Warnln(err)
 	}
 	var res string
-
-	err = d.dbconn.QueryRow("select originalurl from storage where shorturl=$1", shortURL).Scan(
-		&res)
+	err = d.dbconn.QueryRow("select originalurl from storage where shorturl=$1", shortURL).Scan(&res)
 	isFound := true
 	if err != nil {
 		isFound = false
@@ -89,4 +88,20 @@ func (d *DB) GetData(shortURL string) (string, bool) {
 }
 func (d *DB) Close() error {
 	return d.dbconn.Close()
+}
+
+func (d *DB) IsCookieExist(cookie string) bool {
+	err := d.dbconn.Ping()
+	if err != nil {
+		logger.Log.Warnln(err)
+	}
+	var isFound bool
+	var res string
+	err = d.dbconn.QueryRow("select * from storage where cookie=$1", cookie).Scan(&res)
+	if res == cookie {
+		isFound = true
+	} else if err != nil {
+		isFound = false
+	}
+	return isFound
 }

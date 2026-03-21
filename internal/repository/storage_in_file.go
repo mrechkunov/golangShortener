@@ -9,6 +9,7 @@ import (
 	"sync"
 
 	"github.com/mrechkunov/golangShortener.git/internal/config"
+	"github.com/mrechkunov/golangShortener.git/internal/cryptoauth"
 	"github.com/mrechkunov/golangShortener.git/internal/logger"
 	"github.com/mrechkunov/golangShortener.git/internal/model"
 )
@@ -141,15 +142,22 @@ func NewSafeMapFile() *SafeMapFile {
 	return &s
 }
 
-func (s *SafeMapFile) SetData(shortURL string, originalURL string) error {
+func (s *SafeMapFile) SetData(shortURL string, originalURL string, cookie string) error {
 	logger.Log.Infoln("Set Data file")
 	s.mu.Lock() // Блокировка на запись
 	defer s.mu.Unlock()
+	uid, err := cryptoauth.GetIDFromCookie(cookie)
+	if err != nil {
+		logger.Log.Errorln("can not Get ID from cookie while setdata in storage")
+	}
 	newEvent := model.Event{
 		ID:          s.counter,
 		ShortURL:    shortURL,
 		OriginalURL: originalURL,
+		Cookie:      cookie,
+		UID:         uid,
 	}
+
 	if _, ok := s.m[shortURL]; !ok {
 		s.m[shortURL] = newEvent
 		s.counter++
@@ -208,4 +216,15 @@ func (s *SafeMapFile) ReadDataFromFile() {
 
 func (s *SafeMapFile) Close() error {
 	return nil
+}
+
+func (s *SafeMapFile) IsCookieExist(cookie string) bool {
+	// перебор всей мапы и сравнение поля cookie
+	returnValue := false
+	for _, value := range s.m {
+		if value.Cookie == cookie {
+			returnValue = true
+		}
+	}
+	return returnValue
 }

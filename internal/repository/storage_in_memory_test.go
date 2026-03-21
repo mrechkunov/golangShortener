@@ -14,15 +14,16 @@ func TestSafeSlice_SetData(t *testing.T) {
 		// Named input parameters for target function.
 		url      string
 		shortURL string
+		cookie   string
 	}{
-		{"Valid name", "http://test.test1", "http://test.short"},
-		{"Empty name", "", ""},
+		{"Valid name", "http://test.test1", "http://test.short", "test"},
+		{"Empty name", "", "", ""},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			Storage := repository.StorageInit()
 			defer Storage.Close()
-			repository.GetStorage().SetData(tt.url, tt.shortURL)
+			repository.GetStorage().SetData(tt.url, tt.shortURL, tt.cookie)
 		})
 	}
 }
@@ -33,17 +34,18 @@ func TestSafeSlice_GetData(t *testing.T) {
 		name string // description of this test case
 		// Named input parameters for target function.
 		shortURL string
+		cookie   string
 		want     string
 	}{
-		{"Valid name", "http://test.test2", "http://test.test2"},
-		{"Empty name", "", ""},
+		{"Valid name", "http://test.test2", "http://test.test2", "testcookie"},
+		{"Empty name", "", "", ""},
 		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			Storage := repository.StorageInit()
 			defer Storage.Close()
-			repository.GetStorage().SetData(tt.want, tt.shortURL)
+			repository.GetStorage().SetData(tt.want, tt.shortURL, tt.cookie)
 			got, _ := repository.GetStorage().GetData(tt.shortURL)
 
 			// TODO: update the condition below to compare got with tt.want.

@@ -7,7 +7,8 @@ import (
 
 type StorageI interface {
 	GetData(shortURL string) (string, bool)
-	SetData(shortURL string, originalURL string) error
+	SetData(shortURL string, originalURL string, cookie string) error
+	IsCookieExist(cookie string) bool
 	Close() error
 }
 
