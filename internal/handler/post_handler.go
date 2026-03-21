@@ -3,13 +3,14 @@ package handler
 import (
 	"crypto/sha256"
 	"encoding/hex"
-	"fmt"
 	"io"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/mrechkunov/golangShortener.git/internal/config"
 	"github.com/mrechkunov/golangShortener.git/internal/cryptoauth"
+	"github.com/mrechkunov/golangShortener.git/internal/logger"
 	"github.com/mrechkunov/golangShortener.git/internal/repository"
 )
 
@@ -22,12 +23,23 @@ func PostHandler(res http.ResponseWriter, req *http.Request) {
 
 	//проверяем cookie если нет/не проходит проверку, выдаем новую
 	cookieName := "shorterner"
-	cookie, _ := req.Cookie(cookieName)
-	fmt.Println("try ro exist")
-	isExist := repository.GetStorage().IsCookieExist(cookie.Value)
-	isValid, _ := cryptoauth.ValidateCookieSign(cookie.Value)
+	var isExist, isValid bool
+	var cookie *http.Cookie
+	cookie, err := req.Cookie(cookieName)
+	if err != nil {
+		logger.Log.Infoln("cookie is not exist", err)
+		isExist = false
+	} else {
+		isExist = repository.GetStorage().IsCookieExist(cookie.Value)
+		isValid, _ = cryptoauth.ValidateCookieSign(cookie.Value)
+	}
 	if !isExist || !isValid {
-		cookie.Value = cryptoauth.GenerateNewCookie()
+		cookie = &http.Cookie{
+			Name:     cookieName,
+			Value:    cryptoauth.GenerateNewCookie(),
+			Expires:  time.Now().Add(24 * time.Hour),
+			HttpOnly: true,
+		}
 	}
 	http.SetCookie(res, cookie)
 

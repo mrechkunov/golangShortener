@@ -5,9 +5,11 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"net/http"
+	"time"
 
 	"github.com/mrechkunov/golangShortener.git/internal/config"
 	"github.com/mrechkunov/golangShortener.git/internal/cryptoauth"
+	"github.com/mrechkunov/golangShortener.git/internal/logger"
 	"github.com/mrechkunov/golangShortener.git/internal/model"
 	"github.com/mrechkunov/golangShortener.git/internal/repository"
 )
@@ -21,11 +23,23 @@ func JSONPostHandler(w http.ResponseWriter, r *http.Request) {
 
 	//проверяем cookie если нет/не проходит проверку, выдаем новую
 	cookieName := "shorterner"
-	cookie, _ := r.Cookie(cookieName)
-	isExist := repository.GetStorage().IsCookieExist(cookie.Value)
-	isValid, _ := cryptoauth.ValidateCookieSign(cookie.Value)
+	var isExist, isValid bool
+	var cookie *http.Cookie
+	cookie, err := r.Cookie(cookieName)
+	if err != nil {
+		logger.Log.Infoln("cookie is not exist", err)
+		isExist = false
+	} else {
+		isExist = repository.GetStorage().IsCookieExist(cookie.Value)
+		isValid, _ = cryptoauth.ValidateCookieSign(cookie.Value)
+	}
 	if !isExist || !isValid {
-		cookie.Value = cryptoauth.GenerateNewCookie()
+		cookie = &http.Cookie{
+			Name:     cookieName,
+			Value:    cryptoauth.GenerateNewCookie(),
+			Expires:  time.Now().Add(24 * time.Hour),
+			HttpOnly: true,
+		}
 	}
 	http.SetCookie(w, cookie)
 
@@ -42,7 +56,7 @@ func JSONPostHandler(w http.ResponseWriter, r *http.Request) {
 	var resp model.ResponseData
 	resp.ShortURL = ShortURL
 	// пишем в хранилище
-	err := repository.GetStorage().SetData(hex.EncodeToString(hash[:4]), req.URL, cookie.Value)
+	err = repository.GetStorage().SetData(hex.EncodeToString(hash[:4]), req.URL, cookie.Value)
 	if err != nil {
 		//формируем заголовок ответа
 		w.Header().Set("Content-Type", "application/json")

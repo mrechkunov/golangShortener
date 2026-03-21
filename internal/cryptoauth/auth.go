@@ -12,7 +12,7 @@ import (
 
 var secretKey = "secret key"
 
-// generate NEW UID, sign it and rerurn cookieString
+// generate NEW UID, sign it and return cookieString
 func GenerateNewCookie() string {
 	id := make([]byte, 4)
 	_, err := rand.Read(id)
@@ -64,7 +64,7 @@ func GetIDFromCookie(cookie string) (uint32, error) {
 	data, err := hex.DecodeString(cookie)
 	if err != nil {
 		fmt.Println("error while decoding incoming coockies", err)
-		return 1, err
+		return 0, err
 	}
 	return binary.BigEndian.Uint32(data[:4]), nil
 }

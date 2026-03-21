@@ -28,7 +28,7 @@ func (s *SafeMap) SetData(shortURL string, originalURL string, cookie string) er
 	defer s.mu.Unlock()
 	uid, err := cryptoauth.GetIDFromCookie(cookie)
 	if err != nil {
-		logger.Log.Errorln("can not Get ID from cookie while setdata in storage")
+		logger.Log.Warnln("can not Get ID from cookie while setdata in storage")
 	}
 	newEvent := model.Event{
 		ID:          s.counter,
@@ -61,14 +61,10 @@ func (s *SafeMap) IsCookieExist(cookie string) bool {
 	fmt.Println("try to exist in storage", cookie)
 	s.mu.RLock() // Блокировка на чтение
 	defer s.mu.RUnlock()
-
 	returnValue := false
-	fmt.Println("try to find cookie")
-	if len(s.m) > 0 {
-		for _, value := range s.m {
-			if value.Cookie == cookie {
-				returnValue = true
-			}
+	for _, value := range s.m {
+		if value.Cookie == cookie {
+			returnValue = true
 		}
 	}
 	return returnValue
