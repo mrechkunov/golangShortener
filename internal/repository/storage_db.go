@@ -3,6 +3,7 @@ package repository
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 	"log"
 
 	"github.com/golang-migrate/migrate/v4"
@@ -100,6 +101,7 @@ func (d *DB) IsCookieExist(cookie string) bool {
 	var isFound bool
 	var res string
 	err = d.dbconn.QueryRow("select * from storage where cookie=$1", cookie).Scan(&res)
+	fmt.Println("selectresult:", res)
 	if res == cookie {
 		isFound = true
 	} else if err != nil {
