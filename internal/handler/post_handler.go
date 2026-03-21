@@ -3,6 +3,7 @@ package handler
 import (
 	"crypto/sha256"
 	"encoding/hex"
+	"fmt"
 	"io"
 	"net/http"
 	"strconv"
@@ -22,6 +23,7 @@ func PostHandler(res http.ResponseWriter, req *http.Request) {
 	//проверяем cookie если нет/не проходит проверку, выдаем новую
 	cookieName := "shorterner"
 	cookie, _ := req.Cookie(cookieName)
+	fmt.Println("try ro exist")
 	isExist := repository.GetStorage().IsCookieExist(cookie.Value)
 	isValid, _ := cryptoauth.ValidateCookieSign(cookie.Value)
 	if !isExist || !isValid {

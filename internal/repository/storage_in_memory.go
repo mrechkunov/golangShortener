@@ -2,6 +2,7 @@ package repository
 
 import (
 	"errors"
+	"fmt"
 	"sync"
 
 	"github.com/mrechkunov/golangShortener.git/internal/cryptoauth"
@@ -57,7 +58,12 @@ func (s *SafeMap) GetData(shortURL string) (string, bool) {
 }
 func (s *SafeMap) IsCookieExist(cookie string) bool {
 	// перебор всей мапы и сравнение поля cookie
+	fmt.Println("try to exist in storage", cookie)
+	s.mu.RLock() // Блокировка на чтение
+	defer s.mu.RUnlock()
+
 	returnValue := false
+	fmt.Println("try to find cookie")
 	if len(s.m) > 0 {
 		for _, value := range s.m {
 			if value.Cookie == cookie {
