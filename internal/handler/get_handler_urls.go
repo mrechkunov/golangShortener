@@ -91,7 +91,7 @@ func GetHandlerURLs(res http.ResponseWriter, req *http.Request) {
 	}
 
 	http.SetCookie(res, cookie)
-	//res.Header().Set("Content-Type", "application/json")
+	res.Header().Set("Content-Type", "application/json")
 	res.WriteHeader(http.StatusOK)
 	// записываем ответ
 	json.NewEncoder(res).Encode(result)
