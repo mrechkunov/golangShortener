@@ -70,6 +70,19 @@ func (s *SafeMap) IsCookieExist(cookie string) bool {
 	return returnValue
 }
 
+func (s *SafeMap) GetDataByUID(uid uint32) []model.ResponseDataBatchByCookie {
+	var result []model.ResponseDataBatchByCookie
+	for _, value := range s.m {
+		if value.UID == uid {
+			var add = model.ResponseDataBatchByCookie{
+				OriginalURL: value.OriginalURL,
+				ShortURL:    value.ShortURL,
+			}
+			result = append(result, add)
+		}
+	}
+	return result
+}
 func (s *SafeMap) Close() error {
 	return nil
 }

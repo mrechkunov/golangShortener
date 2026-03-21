@@ -21,6 +21,8 @@ func main() {
 	// GET Handlers
 	r.Get("/{id}", logger.WithLogging(gzipMiddleware(handler.GetHandler)))
 	r.Get("/ping", logger.WithLogging(gzipMiddleware(handler.GetHandlerPingDB)))
+	r.Get("/api/user/urls", logger.WithLogging(gzipMiddleware(handler.GetHandlerURLs)))
+
 	// POST Handlers
 	r.Post("/", logger.WithLogging(gzipMiddleware(handler.PostHandler)))
 	r.Post("/api/shorten", logger.WithLogging(gzipMiddleware(handler.JSONPostHandler)))

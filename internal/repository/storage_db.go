@@ -3,6 +3,7 @@ package repository
 import (
 	"database/sql"
 	"errors"
+	"log"
 
 	"github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
@@ -10,6 +11,7 @@ import (
 	"github.com/mrechkunov/golangShortener.git/internal/config"
 	"github.com/mrechkunov/golangShortener.git/internal/cryptoauth"
 	"github.com/mrechkunov/golangShortener.git/internal/logger"
+	"github.com/mrechkunov/golangShortener.git/internal/model"
 )
 
 type DB struct {
@@ -104,4 +106,25 @@ func (d *DB) IsCookieExist(cookie string) bool {
 		isFound = false
 	}
 	return isFound
+}
+
+func (d *DB) GetDataByUID(uid uint32) []model.ResponseDataBatchByCookie {
+	var result []model.ResponseDataBatchByCookie
+
+	rows, err := d.dbconn.Query("SELECT shortURL, originalURL FROM storage where uuid=$1", uid)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var r model.ResponseDataBatchByCookie
+		if err := rows.Scan(&r.ShortURL, &r.OriginalURL); err != nil {
+			log.Fatal(err)
+		}
+		result = append(result, r)
+	}
+	if err := rows.Err(); err != nil {
+		log.Fatal(err)
+	}
+	return result
 }

@@ -228,3 +228,17 @@ func (s *SafeMapFile) IsCookieExist(cookie string) bool {
 	}
 	return returnValue
 }
+
+func (s *SafeMapFile) GetDataByUID(uid uint32) []model.ResponseDataBatchByCookie {
+	var result []model.ResponseDataBatchByCookie
+	for _, value := range s.m {
+		if value.UID == uid {
+			var add = model.ResponseDataBatchByCookie{
+				OriginalURL: value.OriginalURL,
+				ShortURL:    value.ShortURL,
+			}
+			result = append(result, add)
+		}
+	}
+	return result
+}

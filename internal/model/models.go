@@ -32,3 +32,8 @@ type ResponseDataBatch struct {
 	CorrelationID string `json:"correlation_id"` // "<строковый идентификатор из объекта запроса>",
 	ShortURL      string `json:"short_url"`      // "<результирующий сокращённый URL>"
 }
+
+type ResponseDataBatchByCookie struct {
+	OriginalURL string `json:"original_url"` // "<оригинальны URL>",
+	ShortURL    string `json:"short_url"`    // "<результирующий сокращённый URL>"
+}
