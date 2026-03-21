@@ -5,7 +5,7 @@ CREATE TABLE IF NOT EXISTS storage (
     originalURL VARCHAR(255) NOT NULL,
     count INTEGER NOT NULL,
     uuid INTEGER NOT NULL,
-    cookie VARCHAR(255) NOT NULL,
+    cookie VARCHAR(255) NOT NULL
 );
 
 -- Базовый индекс для поиска по названию
