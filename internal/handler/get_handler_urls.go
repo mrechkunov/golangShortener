@@ -2,6 +2,7 @@ package handler
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -44,8 +45,11 @@ func GetHandlerURLs(res http.ResponseWriter, req *http.Request) {
 	// Выбрать из хранилища все записи с uid
 	baseResultAdress := config.ConfigAdreses.ResultServerAdress
 	responseBatch := repository.GetStorage().GetDataByUID(uid)
+	fmt.Println("len of responseBatch", len(responseBatch))
 	if len(responseBatch) == 0 {
+		fmt.Println("set 204")
 		res.WriteHeader(http.StatusNoContent)
+		fmt.Println("set coockie")
 		http.SetCookie(res, cookie)
 		return
 	}
