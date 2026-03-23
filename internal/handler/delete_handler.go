@@ -2,7 +2,6 @@ package handler
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"time"
 
@@ -11,57 +10,58 @@ import (
 	"github.com/mrechkunov/golangShortener.git/internal/repository"
 )
 
-func DeleteHandler(res http.ResponseWriter, req *http.Request) {
-	if req.Method != http.MethodDelete {
-		http.Error(res, "Only DELETE requests are allowed!", http.StatusBadRequest)
-		return
-	}
-	//проверяем cookie если нет/не проходит проверку, выдаем новую
-	cookieName := "shorterner"
-	var isExist, isValid bool
-	var cookie *http.Cookie
-	cookie, err := req.Cookie(cookieName)
-	if err != nil {
-		logger.Log.Infoln("cookie is not exist", err)
-		isExist = false
-	} else {
-		isExist = repository.GetStorage().IsCookieExist(cookie.Value)
-		isValid, _ = cryptoauth.ValidateCookieSign(cookie.Value)
-	}
-	if !isExist || !isValid {
-		cookie = &http.Cookie{
-			Name:     cookieName,
-			Value:    cryptoauth.GenerateNewCookie(),
-			Expires:  time.Now().Add(24 * time.Hour),
-			HttpOnly: true,
+func DeleteHandler(c chan []string) func(res http.ResponseWriter, req *http.Request) {
+	return func(res http.ResponseWriter, req *http.Request) {
+		if req.Method != http.MethodDelete {
+			http.Error(res, "Only DELETE requests are allowed!", http.StatusBadRequest)
+			return
 		}
-	}
-	http.SetCookie(res, cookie)
-
-	var reqdata []string
-	if err := json.NewDecoder(req.Body).Decode(&reqdata); err != nil {
-		http.Error(res, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	// в мэйне должен быть запущена горутина которая будет ждать попадания в канал
-	// shortURL для удаления и помечать ее на удаление
-	//
-	//
-	// функция пометить на удаление shorturl на вход
-	//
-	// проверить на возможность удаления, если удаление возможно,
-	// то закинуть данные в канал для удаления
-	// удалить по факту появления данных в канале
-	fmt.Println("data to delete")
-	for _, str := range reqdata {
-		if repository.GetStorage().IsCreator(str, cookie.Value) {
-			// реализовано как есть, необходимо реализовать в горутине
-			repository.GetStorage().SetIsDeleted(str)
+		//проверяем cookie если нет/не проходит проверку, выдаем новую
+		cookieName := "shorterner"
+		var isExist, isValid bool
+		var cookie *http.Cookie
+		cookie, err := req.Cookie(cookieName)
+		if err != nil {
+			logger.Log.Infoln("cookie is not exist", err)
+			isExist = false
+		} else {
+			isExist = repository.GetStorage().IsCookieExist(cookie.Value)
+			isValid, _ = cryptoauth.ValidateCookieSign(cookie.Value)
 		}
-		fmt.Println(str)
+		if !isExist || !isValid {
+			cookie = &http.Cookie{
+				Name:     cookieName,
+				Value:    cryptoauth.GenerateNewCookie(),
+				Expires:  time.Now().Add(24 * time.Hour),
+				HttpOnly: true,
+			}
+		}
+		http.SetCookie(res, cookie)
+
+		var reqdata []string
+		if err := json.NewDecoder(req.Body).Decode(&reqdata); err != nil {
+			http.Error(res, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		// в мэйне должен быть запущена горутина которая будет ждать попадания в канал
+		// shortURL для удаления и помечать ее на удаление
+		//
+		//
+		// функция пометить на удаление shorturl на вход
+		//
+		// проверить на возможность удаления, если удаление возможно,
+		// то закинуть данные в канал для удаления
+		// удалить по факту появления данных в канале
+		var sliceToDelete []string
+		for _, str := range reqdata {
+			if repository.GetStorage().IsCreator(str, cookie.Value) {
+				sliceToDelete = append(sliceToDelete, str)
+			}
+		}
+		c <- sliceToDelete
+		//формируем заголовок ответа
+		res.Header().Set("Content-Type", "application/json")
+		res.WriteHeader(http.StatusAccepted)
 	}
-	//формируем заголовок ответа
-	res.Header().Set("Content-Type", "application/json")
-	res.WriteHeader(http.StatusAccepted)
 }

@@ -259,10 +259,12 @@ func (s *SafeMapFile) IsCreator(shortURL string, cookie string) bool {
 	}
 }
 
-func (s *SafeMapFile) SetIsDeleted(shortURL string) {
+func (s *SafeMapFile) SetIsDeleted(shortURLs []string) {
 	s.mu.Lock() // Блокировка на чтение
-	s.mu.Unlock()
-	tmpm := s.m[shortURL]
-	tmpm.IsDeleted = true
-	s.m[shortURL] = tmpm
+	defer s.mu.Unlock()
+	for _, val := range shortURLs {
+		tmpm := s.m[val]
+		tmpm.IsDeleted = true
+		s.m[val] = tmpm
+	}
 }

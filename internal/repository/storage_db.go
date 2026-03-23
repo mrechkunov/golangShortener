@@ -163,12 +163,16 @@ func (d *DB) IsCreator(shortURL string, cookie string) bool {
 	}
 }
 
-func (d *DB) SetIsDeleted(shortURL string) {
+func (d *DB) SetIsDeleted(shortURL []string) {
 	err := d.dbconn.Ping()
 	if err != nil {
 		logger.Log.Warnln(err)
 	}
-	err = d.dbconn.QueryRow("UPDATE storage SET isdeleted = true WHERE shorturl=$1", shortURL).Scan(nil)
+	query := `UPDATE storage AS s
+		SET isdeleted = true
+		FROM (SELECT * FROM UNNEST($1::text[]) AS t(shorturl)) AS data
+		WHERE s.shorturl = data.shorturl;`
+	err = d.dbconn.QueryRow(query, shortURL).Scan(nil)
 	if err != nil {
 		logger.Log.Errorln("error while UPDATE isdeleted fiels in db", err)
 	}
