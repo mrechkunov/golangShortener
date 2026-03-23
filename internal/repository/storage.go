@@ -14,7 +14,6 @@ type StorageI interface {
 	IsDeleted(shortURL string) bool
 	IsCreator(shortURL string, cookie string) bool
 	SetIsDeleted(shortURL []string)
-	// TODO функция проставления признака удаления по shortURL
 	Close() error
 }
 

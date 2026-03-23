@@ -41,7 +41,7 @@ func NewDB() *DB {
 
 	// set DB struct (counter uuid & db conn)
 	var cnt int
-	_ = db.QueryRow("select count from storage order by count desc limit 1").Scan(
+	_ = db.QueryRow("SELECT count FROM storage ORDER BY count DESC LIMIT 1").Scan(
 		&cnt)
 	cnt++
 	var retDB = &DB{
@@ -58,13 +58,15 @@ func (d *DB) SetData(shortURL string, originalURL string, cookie string) error {
 	}
 	// проверяем есть ли такой URL в DB
 	var shortURLFromDB string
-	d.dbconn.QueryRow("select shorturl from storage where shorturl=$1", shortURL).Scan(&shortURLFromDB)
+	d.dbconn.QueryRow("SELECT shorturl FROM storage WHERE shorturl=$1", shortURL).Scan(&shortURLFromDB)
 	if shortURLFromDB == shortURL {
 		logger.Log.Infoln("shortURL already exist in DB")
 		return errors.New("409 Conflict")
 	} else {
 		uid, _ := cryptoauth.GetIDFromCookie(cookie)
-		sqlStatement := `INSERT INTO storage (count, uuid, originalurl, shorturl, cookie, isdeleted) VALUES ($1, $2, $3, $4, $5, $6)`
+		sqlStatement := `INSERT INTO storage 
+			(count, uuid, originalurl, shorturl, cookie, isdeleted) 
+			VALUES ($1, $2, $3, $4, $5, $6)`
 		_, err := d.dbconn.Exec(sqlStatement, d.counter, uid, originalURL, shortURL, cookie, false)
 		if err != nil {
 			logger.Log.Errorln("error while insert to db", err)
@@ -81,7 +83,7 @@ func (d *DB) GetData(shortURL string) (string, bool) {
 		logger.Log.Warnln(err)
 	}
 	var res string
-	err = d.dbconn.QueryRow("select originalurl from storage where shorturl=$1", shortURL).Scan(&res)
+	err = d.dbconn.QueryRow("SELECT originalurl FROM storage WHERE shorturl=$1", shortURL).Scan(&res)
 	isFound := true
 	if err != nil {
 		isFound = false
@@ -99,7 +101,7 @@ func (d *DB) IsCookieExist(cookie string) bool {
 	}
 	var isFound bool
 	var queryres string
-	err = d.dbconn.QueryRow("select cookie from storage where cookie=$1", cookie).Scan(&queryres)
+	err = d.dbconn.QueryRow("SELECT cookie FROM storage WHERE cookie=$1", cookie).Scan(&queryres)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			isFound = false
@@ -118,7 +120,7 @@ func (d *DB) IsCookieExist(cookie string) bool {
 func (d *DB) GetDataByUID(uid uint32) []model.ResponseDataBatchByCookie {
 	var result []model.ResponseDataBatchByCookie
 
-	rows, err := d.dbconn.Query("SELECT shortURL, originalURL FROM storage where uuid=$1", uid)
+	rows, err := d.dbconn.Query("SELECT shortURL, originalURL FROM storage WHERE uuid=$1", uid)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -142,7 +144,7 @@ func (d *DB) IsDeleted(shortURL string) bool {
 		logger.Log.Warnln(err)
 	}
 	var result bool
-	err = d.dbconn.QueryRow("select isdeleted from storage where shorturl=$1", shortURL).Scan(&result)
+	err = d.dbconn.QueryRow("SELECT isdeleted FROM storage WHERE shorturl=$1", shortURL).Scan(&result)
 	return result
 }
 
@@ -168,11 +170,11 @@ func (d *DB) SetIsDeleted(shortURL []string) {
 	if err != nil {
 		logger.Log.Warnln(err)
 	}
-	query := `UPDATE storage AS s
+	sqlStatement := `UPDATE storage AS s
 		SET isdeleted = true
 		FROM (SELECT * FROM UNNEST($1::text[]) AS t(shorturl)) AS data
 		WHERE s.shorturl = data.shorturl;`
-	err = d.dbconn.QueryRow(query, shortURL).Scan(nil)
+	_, err = d.dbconn.Exec(sqlStatement, shortURL)
 	if err != nil {
 		logger.Log.Errorln("error while UPDATE isdeleted fiels in db", err)
 	}

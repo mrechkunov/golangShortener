@@ -220,6 +220,8 @@ func (s *SafeMapFile) Close() error {
 
 func (s *SafeMapFile) IsCookieExist(cookie string) bool {
 	// перебор всей мапы и сравнение поля cookie
+	s.mu.RLock() // Блокировка на чтение
+	defer s.mu.RUnlock()
 	returnValue := false
 	for _, value := range s.m {
 		if value.Cookie == cookie {
@@ -230,6 +232,8 @@ func (s *SafeMapFile) IsCookieExist(cookie string) bool {
 }
 
 func (s *SafeMapFile) GetDataByUID(uid uint32) []model.ResponseDataBatchByCookie {
+	s.mu.RLock() // Блокировка на чтение
+	defer s.mu.RUnlock()
 	var result []model.ResponseDataBatchByCookie
 	for _, value := range s.m {
 		if value.UID == uid {
@@ -260,7 +264,7 @@ func (s *SafeMapFile) IsCreator(shortURL string, cookie string) bool {
 }
 
 func (s *SafeMapFile) SetIsDeleted(shortURLs []string) {
-	s.mu.Lock() // Блокировка на чтение
+	s.mu.Lock() // Блокировка
 	defer s.mu.Unlock()
 	for _, val := range shortURLs {
 		tmpm := s.m[val]

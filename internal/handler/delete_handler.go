@@ -43,16 +43,8 @@ func DeleteHandler(c chan []string) func(res http.ResponseWriter, req *http.Requ
 			http.Error(res, err.Error(), http.StatusBadRequest)
 			return
 		}
-
-		// в мэйне должен быть запущена горутина которая будет ждать попадания в канал
-		// shortURL для удаления и помечать ее на удаление
-		//
-		//
-		// функция пометить на удаление shorturl на вход
-		//
-		// проверить на возможность удаления, если удаление возможно,
-		// то закинуть данные в канал для удаления
-		// удалить по факту появления данных в канале
+		// проверяем может ли пользователь помечать на удаление входящие данные
+		// формируем слайс и кидаем его в канал для удаления
 		var sliceToDelete []string
 		for _, str := range reqdata {
 			if repository.GetStorage().IsCreator(str, cookie.Value) {
