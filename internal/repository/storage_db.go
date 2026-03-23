@@ -145,3 +145,31 @@ func (d *DB) IsDeleted(shortURL string) bool {
 	err = d.dbconn.QueryRow("select isdeleted from storage where shorturl=$1", shortURL).Scan(&result)
 	return result
 }
+
+func (d *DB) IsCreator(shortURL string, cookie string) bool {
+	err := d.dbconn.Ping()
+	if err != nil {
+		logger.Log.Warnln(err)
+	}
+	var resultCookie string
+	err = d.dbconn.QueryRow("select cookie from storage where shorturl=$1", shortURL).Scan(&resultCookie)
+	if err != nil {
+		logger.Log.Warnln("error whele select cookie from DB", err)
+	}
+	if resultCookie == cookie {
+		return true
+	} else {
+		return false
+	}
+}
+
+func (d *DB) SetIsDeleted(shortURL string) {
+	err := d.dbconn.Ping()
+	if err != nil {
+		logger.Log.Warnln(err)
+	}
+	err = d.dbconn.QueryRow("UPDATE storage SET isdeleted = true WHERE shorturl=$1", shortURL).Scan(nil)
+	if err != nil {
+		logger.Log.Errorln("error while UPDATE isdeleted fiels in db", err)
+	}
+}

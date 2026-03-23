@@ -43,8 +43,22 @@ func DeleteHandler(res http.ResponseWriter, req *http.Request) {
 		http.Error(res, err.Error(), http.StatusBadRequest)
 		return
 	}
+
+	// в мэйне должен быть запущена горутина которая будет ждать попадания в канал
+	// shortURL для удаления и помечать ее на удаление
+	//
+	//
+	// функция пометить на удаление shorturl на вход
+	//
+	// проверить на возможность удаления, если удаление возможно,
+	// то закинуть данные в канал для удаления
+	// удалить по факту появления данных в канале
 	fmt.Println("data to delete")
 	for _, str := range reqdata {
+		if repository.GetStorage().IsCreator(str, cookie.Value) {
+			// реализовано как есть, необходимо реализовать в горутине
+			repository.GetStorage().SetIsDeleted(str)
+		}
 		fmt.Println(str)
 	}
 	//формируем заголовок ответа

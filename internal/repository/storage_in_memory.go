@@ -78,6 +78,8 @@ func (s *SafeMap) IsCookieExist(cookie string) bool {
 }
 
 func (s *SafeMap) GetDataByUID(uid uint32) []model.ResponseDataBatchByCookie {
+	s.mu.RLock() // Блокировка на чтение
+	defer s.mu.RUnlock()
 	var result []model.ResponseDataBatchByCookie
 	for _, value := range s.m {
 		if value.UID == uid {
@@ -90,6 +92,25 @@ func (s *SafeMap) GetDataByUID(uid uint32) []model.ResponseDataBatchByCookie {
 	}
 	return result
 }
+
+func (s *SafeMap) IsCreator(shortURL string, cookie string) bool {
+	s.mu.RLock() // Блокировка на чтение
+	defer s.mu.RUnlock()
+	if s.m[shortURL].Cookie == cookie {
+		return true
+	} else {
+		return false
+	}
+}
+
 func (s *SafeMap) Close() error {
 	return nil
+}
+
+func (s *SafeMap) SetIsDeleted(shortURL string) {
+	s.mu.Lock() // Блокировка на чтение
+	s.mu.Unlock()
+	tmpm := s.m[shortURL]
+	tmpm.IsDeleted = true
+	s.m[shortURL] = tmpm
 }
