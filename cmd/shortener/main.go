@@ -22,6 +22,7 @@ func main() {
 	r.Get("/{id}", logger.WithLogging(gzipMiddleware(handler.GetHandler)))
 	r.Get("/ping", logger.WithLogging(gzipMiddleware(handler.GetHandlerPingDB)))
 	r.Get("/api/user/urls", logger.WithLogging(gzipMiddleware(handler.GetHandlerURLs)))
+	r.Delete("/api/user/urls", logger.WithLogging(gzipMiddleware(handler.DeleteHandler)))
 
 	// POST Handlers
 	r.Post("/", logger.WithLogging(gzipMiddleware(handler.PostHandler)))

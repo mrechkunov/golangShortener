@@ -3,7 +3,6 @@ package handler
 import (
 	"crypto/sha256"
 	"encoding/hex"
-	"fmt"
 	"io"
 	"net/http"
 	"strconv"
@@ -43,7 +42,6 @@ func PostHandler(res http.ResponseWriter, req *http.Request) {
 		}
 	}
 	http.SetCookie(res, cookie)
-	fmt.Println("set cookie:", cookie)
 
 	//читаем тело запроса
 	body, err := io.ReadAll(req.Body)

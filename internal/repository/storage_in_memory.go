@@ -36,6 +36,7 @@ func (s *SafeMap) SetData(shortURL string, originalURL string, cookie string) er
 		OriginalURL: originalURL,
 		Cookie:      cookie,
 		UID:         uid,
+		IsDeleted:   false,
 	}
 	if _, ok := s.m[shortURL]; !ok {
 		s.m[shortURL] = newEvent
@@ -56,6 +57,12 @@ func (s *SafeMap) GetData(shortURL string) (string, bool) {
 		return originalURL, true
 	}
 }
+func (s *SafeMap) IsDeleted(shortURL string) bool {
+	s.mu.RLock() // Блокировка на чтение
+	defer s.mu.RUnlock()
+	return s.m[shortURL].IsDeleted
+}
+
 func (s *SafeMap) IsCookieExist(cookie string) bool {
 	// перебор всей мапы и сравнение поля cookie
 	fmt.Println("try to exist in storage", cookie)

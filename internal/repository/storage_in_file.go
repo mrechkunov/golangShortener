@@ -242,3 +242,9 @@ func (s *SafeMapFile) GetDataByUID(uid uint32) []model.ResponseDataBatchByCookie
 	}
 	return result
 }
+
+func (s *SafeMapFile) IsDeleted(shortURL string) bool {
+	s.mu.RLock() // Блокировка на чтение
+	defer s.mu.RUnlock()
+	return s.m[shortURL].IsDeleted
+}

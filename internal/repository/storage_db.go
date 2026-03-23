@@ -41,7 +41,7 @@ func NewDB() *DB {
 
 	// set DB struct (counter uuid & db conn)
 	var cnt int
-	_ = db.QueryRow("select uuid from storage order by uuid desc limit 1").Scan(
+	_ = db.QueryRow("select count from storage order by count desc limit 1").Scan(
 		&cnt)
 	cnt++
 	var retDB = &DB{
@@ -64,8 +64,8 @@ func (d *DB) SetData(shortURL string, originalURL string, cookie string) error {
 		return errors.New("409 Conflict")
 	} else {
 		uid, _ := cryptoauth.GetIDFromCookie(cookie)
-		sqlStatement := `INSERT INTO storage (count, uuid, originalurl, shorturl, cookie) VALUES ($1, $2, $3, $4, $5)`
-		_, err := d.dbconn.Exec(sqlStatement, d.counter, uid, originalURL, shortURL, cookie)
+		sqlStatement := `INSERT INTO storage (count, uuid, originalurl, shorturl, cookie, isdeleted) VALUES ($1, $2, $3, $4, $5, $6)`
+		_, err := d.dbconn.Exec(sqlStatement, d.counter, uid, originalURL, shortURL, cookie, false)
 		if err != nil {
 			logger.Log.Errorln("error while insert to db", err)
 			return err
@@ -133,5 +133,15 @@ func (d *DB) GetDataByUID(uid uint32) []model.ResponseDataBatchByCookie {
 	if err := rows.Err(); err != nil {
 		log.Fatal(err)
 	}
+	return result
+}
+
+func (d *DB) IsDeleted(shortURL string) bool {
+	err := d.dbconn.Ping()
+	if err != nil {
+		logger.Log.Warnln(err)
+	}
+	var result bool
+	err = d.dbconn.QueryRow("select isdeleted from storage where shorturl=$1", shortURL).Scan(&result)
 	return result
 }

@@ -11,6 +11,8 @@ type StorageI interface {
 	SetData(shortURL string, originalURL string, cookie string) error
 	IsCookieExist(cookie string) bool
 	GetDataByUID(uid uint32) []model.ResponseDataBatchByCookie
+	IsDeleted(shortURL string) bool
+	// TODO функция проставления признака удаления по shortURL
 	Close() error
 }
 

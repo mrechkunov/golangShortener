@@ -1,0 +1,2 @@
+ALTER TABLE storage
+DROP COLUMN IF EXIST isDeleted CASCADE;
