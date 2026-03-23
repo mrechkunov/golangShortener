@@ -2,6 +2,7 @@ package handler
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -41,6 +42,10 @@ func DeleteHandler(res http.ResponseWriter, req *http.Request) {
 	if err := json.NewDecoder(req.Body).Decode(&reqdata); err != nil {
 		http.Error(res, err.Error(), http.StatusBadRequest)
 		return
+	}
+	fmt.Println("data to delete")
+	for _, str := range reqdata {
+		fmt.Println(str)
 	}
 	//формируем заголовок ответа
 	res.Header().Set("Content-Type", "application/json")
