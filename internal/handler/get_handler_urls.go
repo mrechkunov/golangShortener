@@ -18,7 +18,6 @@ func GetHandlerURLs(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 	//проверяем cookie если нет/не проходит проверку, выдаем новую
-	cookieName := "shorterner"
 	var isExist, isValid bool
 	var cookie *http.Cookie
 	cookie, err := req.Cookie(cookieName)
@@ -33,7 +32,7 @@ func GetHandlerURLs(res http.ResponseWriter, req *http.Request) {
 		cookie = &http.Cookie{
 			Name:     cookieName,
 			Value:    cryptoauth.GenerateNewCookie(),
-			Expires:  time.Now().Add(24 * time.Hour),
+			Expires:  time.Now().Add(cookieTTL),
 			HttpOnly: true,
 		}
 		http.SetCookie(res, cookie)

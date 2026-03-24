@@ -23,7 +23,7 @@ func NewSafeMap() *SafeMap {
 }
 
 func (s *SafeMap) SetData(shortURL string, originalURL string, cookie string) error {
-	s.mu.Lock() // Блокировка на запись
+	s.mu.Lock()
 	defer s.mu.Unlock()
 	uid, err := cryptoauth.GetIDFromCookie(cookie)
 	if err != nil {
@@ -47,7 +47,7 @@ func (s *SafeMap) SetData(shortURL string, originalURL string, cookie string) er
 }
 
 func (s *SafeMap) GetData(shortURL string) (string, bool) {
-	s.mu.RLock() // Блокировка на чтение
+	s.mu.RLock()
 	defer s.mu.RUnlock()
 	if val, ok := s.m[shortURL]; !ok {
 		return "", false
@@ -57,14 +57,14 @@ func (s *SafeMap) GetData(shortURL string) (string, bool) {
 	}
 }
 func (s *SafeMap) IsDeleted(shortURL string) bool {
-	s.mu.RLock() // Блокировка на чтение
+	s.mu.RLock()
 	defer s.mu.RUnlock()
 	return s.m[shortURL].IsDeleted
 }
 
 func (s *SafeMap) IsCookieExist(cookie string) bool {
 	// перебор всей мапы и сравнение поля cookie
-	s.mu.RLock() // Блокировка на чтение
+	s.mu.RLock()
 	defer s.mu.RUnlock()
 	returnValue := false
 	for _, value := range s.m {
@@ -76,7 +76,7 @@ func (s *SafeMap) IsCookieExist(cookie string) bool {
 }
 
 func (s *SafeMap) GetDataByUID(uid uint32) []model.ResponseDataBatchByCookie {
-	s.mu.RLock() // Блокировка на чтение
+	s.mu.RLock()
 	defer s.mu.RUnlock()
 	var result []model.ResponseDataBatchByCookie
 	for _, value := range s.m {
@@ -92,13 +92,12 @@ func (s *SafeMap) GetDataByUID(uid uint32) []model.ResponseDataBatchByCookie {
 }
 
 func (s *SafeMap) IsCreator(shortURL string, cookie string) bool {
-	s.mu.RLock() // Блокировка на чтение
+	s.mu.RLock()
 	defer s.mu.RUnlock()
 	if s.m[shortURL].Cookie == cookie {
 		return true
-	} else {
-		return false
 	}
+	return false
 }
 
 func (s *SafeMap) Close() error {
@@ -106,7 +105,7 @@ func (s *SafeMap) Close() error {
 }
 
 func (s *SafeMap) SetIsDeleted(shortURLs []string) {
-	s.mu.Lock() // Блокировка на чтение
+	s.mu.Lock()
 	defer s.mu.Unlock()
 	for _, val := range shortURLs {
 		tmpm := s.m[val]

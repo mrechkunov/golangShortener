@@ -144,7 +144,7 @@ func NewSafeMapFile() *SafeMapFile {
 
 func (s *SafeMapFile) SetData(shortURL string, originalURL string, cookie string) error {
 	logger.Log.Infoln("Set Data file")
-	s.mu.Lock() // Блокировка на запись
+	s.mu.Lock()
 	defer s.mu.Unlock()
 	uid, err := cryptoauth.GetIDFromCookie(cookie)
 	if err != nil {
@@ -181,7 +181,7 @@ func (s *SafeMapFile) SetData(shortURL string, originalURL string, cookie string
 
 func (s *SafeMapFile) GetData(shortURL string) (string, bool) {
 	logger.Log.Infoln("Get Data file")
-	s.mu.RLock() // Блокировка на чтение
+	s.mu.RLock()
 	defer s.mu.RUnlock()
 	if val, ok := s.m[shortURL]; !ok {
 		return "", false
@@ -206,7 +206,7 @@ func (s *SafeMapFile) ReadDataFromFile() {
 			logger.Log.Infow("file is empty (Consumer)")
 		} else {
 			for _, event := range *events {
-				s.mu.Lock() // Блокировка на запись
+				s.mu.Lock()
 				s.m[event.ShortURL] = event
 				s.mu.Unlock()
 			}
@@ -220,7 +220,7 @@ func (s *SafeMapFile) Close() error {
 
 func (s *SafeMapFile) IsCookieExist(cookie string) bool {
 	// перебор всей мапы и сравнение поля cookie
-	s.mu.RLock() // Блокировка на чтение
+	s.mu.RLock()
 	defer s.mu.RUnlock()
 	returnValue := false
 	for _, value := range s.m {
@@ -232,7 +232,7 @@ func (s *SafeMapFile) IsCookieExist(cookie string) bool {
 }
 
 func (s *SafeMapFile) GetDataByUID(uid uint32) []model.ResponseDataBatchByCookie {
-	s.mu.RLock() // Блокировка на чтение
+	s.mu.RLock()
 	defer s.mu.RUnlock()
 	var result []model.ResponseDataBatchByCookie
 	for _, value := range s.m {
@@ -248,23 +248,22 @@ func (s *SafeMapFile) GetDataByUID(uid uint32) []model.ResponseDataBatchByCookie
 }
 
 func (s *SafeMapFile) IsDeleted(shortURL string) bool {
-	s.mu.RLock() // Блокировка на чтение
+	s.mu.RLock()
 	defer s.mu.RUnlock()
 	return s.m[shortURL].IsDeleted
 }
 
 func (s *SafeMapFile) IsCreator(shortURL string, cookie string) bool {
-	s.mu.RLock() // Блокировка на чтение
+	s.mu.RLock()
 	defer s.mu.RUnlock()
 	if s.m[shortURL].Cookie == cookie {
 		return true
-	} else {
-		return false
 	}
+	return false
 }
 
 func (s *SafeMapFile) SetIsDeleted(shortURLs []string) {
-	s.mu.Lock() // Блокировка
+	s.mu.Lock()
 	defer s.mu.Unlock()
 	for _, val := range shortURLs {
 		tmpm := s.m[val]

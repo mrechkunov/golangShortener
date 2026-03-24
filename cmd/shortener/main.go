@@ -8,6 +8,7 @@ import (
 	"github.com/mrechkunov/golangShortener.git/internal/handler"
 	"github.com/mrechkunov/golangShortener.git/internal/logger"
 	"github.com/mrechkunov/golangShortener.git/internal/repository"
+	"github.com/mrechkunov/golangShortener.git/internal/service"
 )
 
 func main() {
@@ -23,15 +24,9 @@ func main() {
 	r.Get("/ping", logger.WithLogging(gzipMiddleware(handler.GetHandlerPingDB)))
 	r.Get("/api/user/urls", logger.WithLogging(gzipMiddleware(handler.GetHandlerURLs)))
 	chanToDelete := make(chan []string)
-	go func() {
-		for val := range chanToDelete {
-			repository.GetStorage().SetIsDeleted(val)
-		}
-	}()
+	go service.SetIsDeleted(chanToDelete)
 	// DELETE Handlers
-
 	r.Delete("/api/user/urls", logger.WithLogging(gzipMiddleware(handler.DeleteHandler(chanToDelete))))
-
 	// POST Handlers
 	r.Post("/", logger.WithLogging(gzipMiddleware(handler.PostHandler)))
 	r.Post("/api/shorten", logger.WithLogging(gzipMiddleware(handler.JSONPostHandler)))

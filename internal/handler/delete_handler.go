@@ -17,7 +17,6 @@ func DeleteHandler(c chan []string) func(res http.ResponseWriter, req *http.Requ
 			return
 		}
 		//проверяем cookie если нет/не проходит проверку, выдаем новую
-		cookieName := "shorterner"
 		var isExist, isValid bool
 		var cookie *http.Cookie
 		cookie, err := req.Cookie(cookieName)

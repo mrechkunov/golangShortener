@@ -16,9 +16,8 @@ type Adreses struct {
 var ConfigAdreses = Adreses{
 	ServerBindAdress:   "localhost:8080",
 	ResultServerAdress: "http://localhost:8080", // для работы unit теста
-
-	JSONFile:  "",
-	DBConnStr: "",
+	JSONFile:           "",
+	DBConnStr:          "",
 }
 
 func Init() {

@@ -2,9 +2,13 @@ package handler
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/mrechkunov/golangShortener.git/internal/repository"
 )
+
+const cookieName = "shorterner"
+const cookieTTL = 24 * time.Hour
 
 func GetHandler(res http.ResponseWriter, req *http.Request) {
 	if req.Method != http.MethodGet {

@@ -22,7 +22,7 @@ func JSONPostHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	//проверяем cookie если нет/не проходит проверку, выдаем новую
-	cookieName := "shorterner"
+
 	var isExist, isValid bool
 	var cookie *http.Cookie
 	cookie, err := r.Cookie(cookieName)
@@ -37,7 +37,7 @@ func JSONPostHandler(w http.ResponseWriter, r *http.Request) {
 		cookie = &http.Cookie{
 			Name:     cookieName,
 			Value:    cryptoauth.GenerateNewCookie(),
-			Expires:  time.Now().Add(24 * time.Hour),
+			Expires:  time.Now().Add(cookieTTL),
 			HttpOnly: true,
 		}
 	}
