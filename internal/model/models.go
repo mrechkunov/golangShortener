@@ -16,9 +16,12 @@ type ResponseBody struct {
 	Result string `json:"result"`
 }
 type Event struct {
-	ID          int    `json:"uuid"`
-	ShortURL    string `json:"short_url"`
-	OriginalURL string `json:"original_url"`
+	ID          int    `json:"event_id" db:"count"`
+	ShortURL    string `json:"short_url" db:"shorturl"`
+	OriginalURL string `json:"original_url" db:"originalurl"`
+	Cookie      string `json:"cookie" db:"cookie"`
+	UID         uint32 `json:"user_id" db:"uuid"`
+	IsDeleted   bool   `json:"is_deleted" db:"isdeleted"`
 }
 
 type RequestDataBatch struct {
@@ -29,4 +32,9 @@ type RequestDataBatch struct {
 type ResponseDataBatch struct {
 	CorrelationID string `json:"correlation_id"` // "<строковый идентификатор из объекта запроса>",
 	ShortURL      string `json:"short_url"`      // "<результирующий сокращённый URL>"
+}
+
+type ResponseDataBatchByCookie struct {
+	OriginalURL string `json:"original_url"` // "<оригинальны URL>",
+	ShortURL    string `json:"short_url"`    // "<результирующий сокращённый URL>"
 }

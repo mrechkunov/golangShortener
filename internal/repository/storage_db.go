@@ -3,12 +3,15 @@ package repository
 import (
 	"database/sql"
 	"errors"
+	"log"
 
 	"github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/mrechkunov/golangShortener.git/internal/config"
+	"github.com/mrechkunov/golangShortener.git/internal/cryptoauth"
 	"github.com/mrechkunov/golangShortener.git/internal/logger"
+	"github.com/mrechkunov/golangShortener.git/internal/model"
 )
 
 type DB struct {
@@ -38,7 +41,7 @@ func NewDB() *DB {
 
 	// set DB struct (counter uuid & db conn)
 	var cnt int
-	_ = db.QueryRow("select uuid from storage order by uuid desc limit 1").Scan(
+	_ = db.QueryRow("SELECT count FROM storage ORDER BY count DESC LIMIT 1").Scan(
 		&cnt)
 	cnt++
 	var retDB = &DB{
@@ -48,20 +51,23 @@ func NewDB() *DB {
 	return retDB
 }
 
-func (d *DB) SetData(shortURL string, originalURL string) error {
+func (d *DB) SetData(shortURL string, originalURL string, cookie string) error {
 	err := d.dbconn.Ping()
 	if err != nil {
 		logger.Log.Fatal(err)
 	}
 	// проверяем есть ли такой URL в DB
 	var shortURLFromDB string
-	d.dbconn.QueryRow("select shorturl from storage where shorturl=$1", shortURL).Scan(&shortURLFromDB)
+	d.dbconn.QueryRow("SELECT shorturl FROM storage WHERE shorturl=$1", shortURL).Scan(&shortURLFromDB)
 	if shortURLFromDB == shortURL {
 		logger.Log.Infoln("shortURL already exist in DB")
 		return errors.New("409 Conflict")
 	} else {
-		sqlStatement := `INSERT INTO storage (uuid, originalurl, shorturl) VALUES ($1, $2, $3)`
-		_, err := d.dbconn.Exec(sqlStatement, d.counter, originalURL, shortURL)
+		uid, _ := cryptoauth.GetIDFromCookie(cookie)
+		sqlStatement := `INSERT INTO storage 
+			(count, uuid, originalurl, shorturl, cookie, isdeleted) 
+			VALUES ($1, $2, $3, $4, $5, $6)`
+		_, err := d.dbconn.Exec(sqlStatement, d.counter, uid, originalURL, shortURL, cookie, false)
 		if err != nil {
 			logger.Log.Errorln("error while insert to db", err)
 			return err
@@ -72,15 +78,12 @@ func (d *DB) SetData(shortURL string, originalURL string) error {
 }
 
 func (d *DB) GetData(shortURL string) (string, bool) {
-
 	err := d.dbconn.Ping()
 	if err != nil {
 		logger.Log.Warnln(err)
 	}
 	var res string
-
-	err = d.dbconn.QueryRow("select originalurl from storage where shorturl=$1", shortURL).Scan(
-		&res)
+	err = d.dbconn.QueryRow("SELECT originalurl FROM storage WHERE shorturl=$1", shortURL).Scan(&res)
 	isFound := true
 	if err != nil {
 		isFound = false
@@ -89,4 +92,90 @@ func (d *DB) GetData(shortURL string) (string, bool) {
 }
 func (d *DB) Close() error {
 	return d.dbconn.Close()
+}
+
+func (d *DB) IsCookieExist(cookie string) bool {
+	err := d.dbconn.Ping()
+	if err != nil {
+		logger.Log.Warnln(err)
+	}
+	var isFound bool
+	var queryres string
+	err = d.dbconn.QueryRow("SELECT cookie FROM storage WHERE cookie=$1", cookie).Scan(&queryres)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			isFound = false
+		} else {
+			logger.Log.Infoln(err)
+		}
+	} else {
+		if queryres == cookie {
+			logger.Log.Infoln("cookie is exist in DB", queryres)
+			isFound = true
+		}
+	}
+	return isFound
+}
+
+func (d *DB) GetDataByUID(uid uint32) []model.ResponseDataBatchByCookie {
+	var result []model.ResponseDataBatchByCookie
+
+	rows, err := d.dbconn.Query("SELECT shortURL, originalURL FROM storage WHERE uuid=$1", uid)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var r model.ResponseDataBatchByCookie
+		if err := rows.Scan(&r.ShortURL, &r.OriginalURL); err != nil {
+			log.Fatal(err)
+		}
+		result = append(result, r)
+	}
+	if err := rows.Err(); err != nil {
+		log.Fatal(err)
+	}
+	return result
+}
+
+func (d *DB) IsDeleted(shortURL string) bool {
+	err := d.dbconn.Ping()
+	if err != nil {
+		logger.Log.Warnln(err)
+	}
+	var result bool
+	err = d.dbconn.QueryRow("SELECT isdeleted FROM storage WHERE shorturl=$1", shortURL).Scan(&result)
+	return result
+}
+
+func (d *DB) IsCreator(shortURL string, cookie string) bool {
+	err := d.dbconn.Ping()
+	if err != nil {
+		logger.Log.Warnln(err)
+	}
+	var resultCookie string
+	err = d.dbconn.QueryRow("select cookie from storage where shorturl=$1", shortURL).Scan(&resultCookie)
+	if err != nil {
+		logger.Log.Warnln("error whele select cookie from DB", err)
+	}
+	if resultCookie == cookie {
+		return true
+	} else {
+		return false
+	}
+}
+
+func (d *DB) SetIsDeleted(shortURL []string) {
+	err := d.dbconn.Ping()
+	if err != nil {
+		logger.Log.Warnln(err)
+	}
+	sqlStatement := `UPDATE storage AS s
+		SET isdeleted = true
+		FROM (SELECT * FROM UNNEST($1::text[]) AS t(shorturl)) AS data
+		WHERE s.shorturl = data.shorturl;`
+	_, err = d.dbconn.Exec(sqlStatement, shortURL)
+	if err != nil {
+		logger.Log.Errorln("error while UPDATE isdeleted fiels in db", err)
+	}
 }

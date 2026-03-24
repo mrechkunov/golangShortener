@@ -3,11 +3,17 @@ package repository
 import (
 	"github.com/mrechkunov/golangShortener.git/internal/config"
 	"github.com/mrechkunov/golangShortener.git/internal/logger"
+	"github.com/mrechkunov/golangShortener.git/internal/model"
 )
 
 type StorageI interface {
 	GetData(shortURL string) (string, bool)
-	SetData(shortURL string, originalURL string) error
+	SetData(shortURL string, originalURL string, cookie string) error
+	IsCookieExist(cookie string) bool
+	GetDataByUID(uid uint32) []model.ResponseDataBatchByCookie
+	IsDeleted(shortURL string) bool
+	IsCreator(shortURL string, cookie string) bool
+	SetIsDeleted(shortURL []string)
 	Close() error
 }
 

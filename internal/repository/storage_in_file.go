@@ -9,6 +9,7 @@ import (
 	"sync"
 
 	"github.com/mrechkunov/golangShortener.git/internal/config"
+	"github.com/mrechkunov/golangShortener.git/internal/cryptoauth"
 	"github.com/mrechkunov/golangShortener.git/internal/logger"
 	"github.com/mrechkunov/golangShortener.git/internal/model"
 )
@@ -141,15 +142,22 @@ func NewSafeMapFile() *SafeMapFile {
 	return &s
 }
 
-func (s *SafeMapFile) SetData(shortURL string, originalURL string) error {
+func (s *SafeMapFile) SetData(shortURL string, originalURL string, cookie string) error {
 	logger.Log.Infoln("Set Data file")
-	s.mu.Lock() // Блокировка на запись
+	s.mu.Lock()
 	defer s.mu.Unlock()
+	uid, err := cryptoauth.GetIDFromCookie(cookie)
+	if err != nil {
+		logger.Log.Errorln("can not Get ID from cookie while setdata in storage")
+	}
 	newEvent := model.Event{
 		ID:          s.counter,
 		ShortURL:    shortURL,
 		OriginalURL: originalURL,
+		Cookie:      cookie,
+		UID:         uid,
 	}
+
 	if _, ok := s.m[shortURL]; !ok {
 		s.m[shortURL] = newEvent
 		s.counter++
@@ -173,7 +181,7 @@ func (s *SafeMapFile) SetData(shortURL string, originalURL string) error {
 
 func (s *SafeMapFile) GetData(shortURL string) (string, bool) {
 	logger.Log.Infoln("Get Data file")
-	s.mu.RLock() // Блокировка на чтение
+	s.mu.RLock()
 	defer s.mu.RUnlock()
 	if val, ok := s.m[shortURL]; !ok {
 		return "", false
@@ -198,7 +206,7 @@ func (s *SafeMapFile) ReadDataFromFile() {
 			logger.Log.Infow("file is empty (Consumer)")
 		} else {
 			for _, event := range *events {
-				s.mu.Lock() // Блокировка на запись
+				s.mu.Lock()
 				s.m[event.ShortURL] = event
 				s.mu.Unlock()
 			}
@@ -208,4 +216,58 @@ func (s *SafeMapFile) ReadDataFromFile() {
 
 func (s *SafeMapFile) Close() error {
 	return nil
+}
+
+func (s *SafeMapFile) IsCookieExist(cookie string) bool {
+	// перебор всей мапы и сравнение поля cookie
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	returnValue := false
+	for _, value := range s.m {
+		if value.Cookie == cookie {
+			returnValue = true
+		}
+	}
+	return returnValue
+}
+
+func (s *SafeMapFile) GetDataByUID(uid uint32) []model.ResponseDataBatchByCookie {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	var result []model.ResponseDataBatchByCookie
+	for _, value := range s.m {
+		if value.UID == uid {
+			var add = model.ResponseDataBatchByCookie{
+				OriginalURL: value.OriginalURL,
+				ShortURL:    value.ShortURL,
+			}
+			result = append(result, add)
+		}
+	}
+	return result
+}
+
+func (s *SafeMapFile) IsDeleted(shortURL string) bool {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return s.m[shortURL].IsDeleted
+}
+
+func (s *SafeMapFile) IsCreator(shortURL string, cookie string) bool {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	if s.m[shortURL].Cookie == cookie {
+		return true
+	}
+	return false
+}
+
+func (s *SafeMapFile) SetIsDeleted(shortURLs []string) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	for _, val := range shortURLs {
+		tmpm := s.m[val]
+		tmpm.IsDeleted = true
+		s.m[val] = tmpm
+	}
 }

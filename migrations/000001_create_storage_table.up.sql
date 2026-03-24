@@ -3,7 +3,9 @@
 CREATE TABLE IF NOT EXISTS storage (
     shortURL VARCHAR(255) PRIMARY KEY,
     originalURL VARCHAR(255) NOT NULL,
-    uuid INTEGER NOT NULL
+    count INTEGER NOT NULL,
+    uuid BIGINT NOT NULL,
+    cookie VARCHAR(255) NOT NULL
 );
 
 -- Базовый индекс для поиска по названию

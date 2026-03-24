@@ -8,6 +8,7 @@ import (
 	"github.com/mrechkunov/golangShortener.git/internal/handler"
 	"github.com/mrechkunov/golangShortener.git/internal/logger"
 	"github.com/mrechkunov/golangShortener.git/internal/repository"
+	"github.com/mrechkunov/golangShortener.git/internal/service"
 )
 
 func main() {
@@ -18,11 +19,19 @@ func main() {
 	logger.Log.Infoln("Reading config")
 
 	r := chi.NewRouter()
-	r.Post("/", logger.WithLogging(gzipMiddleware(handler.PostHandler)))
-	r.Post("/api/shorten", logger.WithLogging(gzipMiddleware(handler.JSONPostHandler)))
+	// GET Handlers
 	r.Get("/{id}", logger.WithLogging(gzipMiddleware(handler.GetHandler)))
 	r.Get("/ping", logger.WithLogging(gzipMiddleware(handler.GetHandlerPingDB)))
+	r.Get("/api/user/urls", logger.WithLogging(gzipMiddleware(handler.GetHandlerURLs)))
+	chanToDelete := make(chan []string)
+	go service.SetIsDeleted(chanToDelete)
+	// DELETE Handlers
+	r.Delete("/api/user/urls", logger.WithLogging(gzipMiddleware(handler.DeleteHandler(chanToDelete))))
+	// POST Handlers
+	r.Post("/", logger.WithLogging(gzipMiddleware(handler.PostHandler)))
+	r.Post("/api/shorten", logger.WithLogging(gzipMiddleware(handler.JSONPostHandler)))
 	r.Post("/api/shorten/batch", logger.WithLogging(gzipMiddleware(handler.JSONBatchPostHandler)))
+
 	logger.Log.Infoln("Starting server", "addr", config.ConfigAdreses.ServerBindAdress)
 	if err := http.ListenAndServe(config.ConfigAdreses.ServerBindAdress, r); err != nil {
 		logger.Log.Fatalw(err.Error(), "event", "start server")
