@@ -32,11 +32,11 @@ func GetHandler(res http.ResponseWriter, req *http.Request) {
 	cookie, err := req.Cookie(cookieName)
 	if err != nil {
 		logger.Log.Infoln(err)
-		cookie.Value = ""
 	}
 	uid, err := cryptoauth.GetIDFromCookie(cookie.Value)
 	if err != nil {
-		logger.Log.Warnln(err)
+		logger.Log.Infoln(err)
+		uid = 0
 	}
 	go logger.Audit("follow", uid, longURL)
 
