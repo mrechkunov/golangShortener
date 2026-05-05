@@ -31,7 +31,8 @@ func GetHandler(res http.ResponseWriter, req *http.Request) {
 	// направляем на аудит
 	cookie, err := req.Cookie(cookieName)
 	if err != nil {
-		logger.Log.Warnln(err)
+		logger.Log.Infoln(err)
+		cookie.Value = ""
 	}
 	uid, err := cryptoauth.GetIDFromCookie(cookie.Value)
 	if err != nil {
