@@ -36,4 +36,5 @@ func main() {
 	if err := http.ListenAndServe(config.ConfigAdreses.ServerBindAdress, r); err != nil {
 		logger.Log.Fatalw(err.Error(), "event", "start server")
 	}
+	close(chanToDelete)
 }
