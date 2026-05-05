@@ -62,6 +62,12 @@ func PostHandler(res http.ResponseWriter, req *http.Request) {
 		res.Write([]byte(shortURL))
 		return
 	}
+	// направляем на аудит
+	uid, err := cryptoauth.GetIDFromCookie(cookie.Value)
+	if err != nil {
+		logger.Log.Warnln(err)
+	}
+	go logger.Audit("shorten", uid, string(body))
 	//формируем заголовок ответа
 
 	res.Header().Set("content-type", "text/plain; charset=utf-8")

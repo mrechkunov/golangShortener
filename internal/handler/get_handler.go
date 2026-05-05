@@ -4,6 +4,8 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/mrechkunov/golangShortener.git/internal/cryptoauth"
+	"github.com/mrechkunov/golangShortener.git/internal/logger"
 	"github.com/mrechkunov/golangShortener.git/internal/repository"
 )
 
@@ -26,6 +28,17 @@ func GetHandler(res http.ResponseWriter, req *http.Request) {
 		http.Error(res, "short URL not found", http.StatusBadRequest)
 		return
 	}
+	// направляем на аудит
+	cookie, err := req.Cookie(cookieName)
+	if err != nil {
+		logger.Log.Warnln(err)
+	}
+	uid, err := cryptoauth.GetIDFromCookie(cookie.Value)
+	if err != nil {
+		logger.Log.Warnln(err)
+	}
+	go logger.Audit("follow", uid, longURL)
+
 	res.Header().Set("Location", longURL)
 	res.Header().Set("Content-type", "text/plain")
 	res.WriteHeader(http.StatusTemporaryRedirect)

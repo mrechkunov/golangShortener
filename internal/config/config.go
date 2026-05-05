@@ -11,6 +11,8 @@ type Adreses struct {
 	MigrationsPath     string
 	JSONFile           string
 	DBConnStr          string
+	AuditFile          string
+	AuditUrl           string
 }
 
 var ConfigAdreses = Adreses{
@@ -18,6 +20,8 @@ var ConfigAdreses = Adreses{
 	ResultServerAdress: "http://localhost:8080", // для работы unit теста
 	JSONFile:           "",
 	DBConnStr:          "",
+	AuditFile:          "",
+	AuditUrl:           "",
 }
 
 func Init() {
@@ -26,6 +30,8 @@ func Init() {
 	mp := flag.String("m", "file://migrations", "default migration PATH")
 	jf := flag.String("f", "", "default storage file")
 	cs := flag.String("d", "", "default DBConnStr")
+	af := flag.String("audit-file", "", "default audit file")
+	au := flag.String("audit-url", "", "default audit url")
 	//jf := flag.String("f", "file.txt", "default storage file")
 	//cs := flag.String("d", "postgres://yapra:yaprapass@10.254.40.123:5432/yandexpracticum?sslmode=disable", "default DBConnStr")
 	flag.Parse()
@@ -58,4 +64,6 @@ func Init() {
 	} else {
 		ConfigAdreses.DBConnStr = *cs
 	}
+	ConfigAdreses.AuditFile = *af
+	ConfigAdreses.AuditUrl = *au
 }
