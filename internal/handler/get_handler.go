@@ -29,10 +29,27 @@ func GetHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 	// направляем на аудит
+
+	//проверяем cookie если нет/не проходит проверку, выдаем новую
+	var isExist, isValid bool
+	var cookie *http.Cookie
 	cookie, err := req.Cookie(cookieName)
 	if err != nil {
-		logger.Log.Infoln(err)
+		logger.Log.Infoln("cookie is not exist", err)
+		isExist = false
+	} else {
+		isExist = repository.GetStorage().IsCookieExist(cookie.Value)
+		isValid, _ = cryptoauth.ValidateCookieSign(cookie.Value)
 	}
+	if !isExist || !isValid {
+		cookie = &http.Cookie{
+			Name:     cookieName,
+			Value:    cryptoauth.GenerateNewCookie(),
+			Expires:  time.Now().Add(cookieTTL),
+			HttpOnly: true,
+		}
+	}
+	http.SetCookie(res, cookie)
 	uid, err := cryptoauth.GetIDFromCookie(cookie.Value)
 	if err != nil {
 		logger.Log.Infoln(err)
