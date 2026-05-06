@@ -1,7 +1,12 @@
 package logger
 
 import (
+	"bufio"
+	"bytes"
+	"encoding/json"
 	"fmt"
+	"net/http"
+	"os"
 	"sync"
 
 	"github.com/mrechkunov/golangShortener.git/internal/model"
@@ -53,6 +58,8 @@ func (a *Audit) Event(newEvent model.ObserverEvent) {
 // реализуем структуры и методы подписчиков
 type ObserverFile struct {
 	fileName string
+	file     *os.File
+	writer   *bufio.Writer
 }
 
 var (
@@ -65,14 +72,38 @@ func NewObserverFile(auditFileName string) *ObserverFile {
 	onceFile.Do( // функция ниже выполнится только один раз
 		func() {
 			// инициализируем объект
-			obsFile = &ObserverFile{fileName: auditFileName}
+			file, err := os.OpenFile(auditFileName, os.O_WRONLY|os.O_CREATE, 0666)
+			if err != nil {
+				Log.Warnln("can not open file to audit logging")
+			}
+			obsFile = &ObserverFile{
+				fileName: auditFileName,
+				file:     file,
+				writer:   bufio.NewWriter(file)}
+
 		})
 	return obsFile
 }
 
-func (of *ObserverFile) Update(model.ObserverEvent) {
-	// логика записи в файл
-	fmt.Println("write to file")
+func (of *ObserverFile) Update(AuditData model.ObserverEvent) {
+
+	data, err := json.Marshal(&AuditData)
+	if err != nil {
+		Log.Infoln("error while marshaling json", err)
+	}
+
+	// записываем событие в буфер
+	if _, err := of.writer.Write(data); err != nil {
+		Log.Infoln("error while write to buffer", err)
+	}
+
+	// добавляем перенос строки
+	if err := of.writer.WriteByte('\n'); err != nil {
+		Log.Infoln("error while add new string", err)
+	}
+
+	// записываем буфер в файл
+	of.writer.Flush()
 }
 
 type ObserverURL struct {
@@ -88,7 +119,17 @@ func NewObserverURL(auditURLName string) *ObserverURL {
 	return obsURL
 }
 
-func (su *ObserverURL) Update(model.ObserverEvent) {
-	// логика записи события в url POST запрос
-	fmt.Println("write to URL")
+func (su *ObserverURL) Update(AuditData model.ObserverEvent) {
+	// Маршалинг json
+	jsonData, err := json.Marshal(AuditData)
+	if err != nil {
+		Log.Infoln("error while marshaling json", err)
+	}
+	// отправка POST запроса
+	resp, err := http.Post(su.URLName, "application/json", bytes.NewBuffer(jsonData))
+	if err != nil {
+		Log.Infoln(err)
+	}
+	defer resp.Body.Close()
+	fmt.Println("Status:", resp.Status)
 }
