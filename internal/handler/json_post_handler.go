@@ -69,7 +69,14 @@ func JSONPostHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		logger.Log.Warnln(err)
 	}
-	go logger.Audit("shorten", uid, req.URL)
+	event := model.ObserverEvent{
+		Ts:          time.Now(),
+		Action:      "shorten",
+		UserId:      uid,
+		OriginalURL: req.URL,
+	}
+	go config.PublisherAudit.Event(event)
+
 	//формируем заголовок ответа
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)

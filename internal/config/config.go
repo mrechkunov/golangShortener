@@ -3,6 +3,8 @@ package config
 import (
 	"flag"
 	"os"
+
+	"github.com/mrechkunov/golangShortener.git/internal/logger"
 )
 
 type Adreses struct {
@@ -23,6 +25,7 @@ var ConfigAdreses = Adreses{
 	AuditFile:          "",
 	AuditUrl:           "",
 }
+var PublisherAudit logger.Audit
 
 func Init() {
 	ba := flag.String("a", "localhost:8080", "adress to server run")
@@ -68,7 +71,14 @@ func Init() {
 	// создаем подписчиков
 	ConfigAdreses.AuditFile = *af
 	ConfigAdreses.AuditUrl = *au
+
 	if ConfigAdreses.AuditFile != "" {
+		obsFile := logger.NewObserverFile(ConfigAdreses.AuditFile)
+		PublisherAudit.RegisterObserver(obsFile)
+	}
+	if ConfigAdreses.AuditUrl != "" {
+		obsURL := logger.NewObserverURL(ConfigAdreses.AuditUrl)
+		PublisherAudit.RegisterObserver(obsURL)
 
 	}
 }

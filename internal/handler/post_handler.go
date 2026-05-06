@@ -11,6 +11,7 @@ import (
 	"github.com/mrechkunov/golangShortener.git/internal/config"
 	"github.com/mrechkunov/golangShortener.git/internal/cryptoauth"
 	"github.com/mrechkunov/golangShortener.git/internal/logger"
+	"github.com/mrechkunov/golangShortener.git/internal/model"
 	"github.com/mrechkunov/golangShortener.git/internal/repository"
 )
 
@@ -67,7 +68,13 @@ func PostHandler(res http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		logger.Log.Warnln(err)
 	}
-	go logger.Audit("shorten", uid, string(body))
+	event := model.ObserverEvent{
+		Ts:          time.Now(),
+		Action:      "shorten",
+		UserId:      uid,
+		OriginalURL: string(body),
+	}
+	go config.PublisherAudit.Event(event)
 	//формируем заголовок ответа
 
 	res.Header().Set("content-type", "text/plain; charset=utf-8")

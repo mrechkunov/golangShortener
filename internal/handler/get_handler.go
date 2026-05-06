@@ -4,8 +4,10 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/mrechkunov/golangShortener.git/internal/config"
 	"github.com/mrechkunov/golangShortener.git/internal/cryptoauth"
 	"github.com/mrechkunov/golangShortener.git/internal/logger"
+	"github.com/mrechkunov/golangShortener.git/internal/model"
 	"github.com/mrechkunov/golangShortener.git/internal/repository"
 )
 
@@ -55,7 +57,15 @@ func GetHandler(res http.ResponseWriter, req *http.Request) {
 		logger.Log.Infoln(err)
 		uid = 0
 	}
-	go logger.Audit("follow", uid, longURL)
+
+	event := model.ObserverEvent{
+		Ts:          time.Now(),
+		Action:      "follow",
+		UserId:      uid,
+		OriginalURL: longURL,
+	}
+
+	go config.PublisherAudit.Event(event)
 
 	res.Header().Set("Location", longURL)
 	res.Header().Set("Content-type", "text/plain")
