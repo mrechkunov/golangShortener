@@ -12,28 +12,30 @@ import (
 	"github.com/mrechkunov/golangShortener.git/internal/model"
 )
 
-// интерфейс публикатора
+// Publisher interface in Audit method
 type Publisher interface {
 	RegisterObserver(o Observer) // Регистрация наблюдателя
 	RemoveObserver(o Observer)   // Удаление наблюдателя
 	NotifyObservers()            // Уведомление всех наблюдателей
 }
 
-// интерфейс подписчиков (файл/url)
+// Observer interface in Audit method (file/url)
 type Observer interface {
 	Update(model.ObserverEvent) // Метод обновления
 }
 
-// реализвция publisher
+// Audit publisher
 type Audit struct {
 	observers []Observer
 	event     model.ObserverEvent
 }
 
+// Register new Observer
 func (a *Audit) RegisterObserver(o Observer) {
 	a.observers = append(a.observers, o)
 }
 
+// Remove Observer
 func (a *Audit) RemoveObserver(o Observer) {
 	for i, observer := range a.observers {
 		if observer == o {
@@ -43,13 +45,14 @@ func (a *Audit) RemoveObserver(o Observer) {
 	}
 }
 
+// Notify all Observers
 func (a *Audit) NotifyObservers() {
 	for _, observer := range a.observers {
 		observer.Update(a.event)
 	}
 }
 
-// принимает новое событие и оповещает всех подписчиков
+// Get new Event and Notify all Observers
 func (a *Audit) Event(newEvent model.ObserverEvent) {
 	a.event = newEvent
 	a.NotifyObservers()
@@ -110,6 +113,7 @@ type ObserverURL struct {
 	URLName string
 }
 
+// Return ptr to new url observer
 func NewObserverURL(auditURLName string) *ObserverURL {
 	onceURL.Do( // функция ниже выполнится только один раз
 		func() {
@@ -119,6 +123,7 @@ func NewObserverURL(auditURLName string) *ObserverURL {
 	return obsURL
 }
 
+// Update method for URL Observer
 func (su *ObserverURL) Update(AuditData model.ObserverEvent) {
 	// Маршалинг json
 	jsonData, err := json.Marshal(AuditData)

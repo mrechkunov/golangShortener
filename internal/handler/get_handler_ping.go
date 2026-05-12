@@ -6,6 +6,7 @@ import (
 	"github.com/mrechkunov/golangShortener.git/internal/repository"
 )
 
+// Get handler to ping DB connection
 func GetHandlerPingDB(res http.ResponseWriter, req *http.Request) {
 	if req.Method != http.MethodGet {
 		http.Error(res, "Only GET requests are allowed!", http.StatusBadRequest)

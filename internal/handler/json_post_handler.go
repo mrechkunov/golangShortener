@@ -14,6 +14,7 @@ import (
 	"github.com/mrechkunov/golangShortener.git/internal/repository"
 )
 
+// JSONPostHandler shorting url from json and insert it in DB
 func JSONPostHandler(w http.ResponseWriter, r *http.Request) {
 	baseResultAdress := config.ConfigAdreses.ResultServerAdress
 	if r.Method != http.MethodPost {

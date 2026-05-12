@@ -19,6 +19,7 @@ type DB struct {
 	counter int
 }
 
+// NewDB set new connection to DB from config, applying all migrations, set counter of rows
 func NewDB() *DB {
 	db, err := NewConnect()
 	if err != nil {
@@ -51,6 +52,7 @@ func NewDB() *DB {
 	return retDB
 }
 
+// SetData insert to DB new row with shortURL, originalURL, UID
 func (d *DB) SetData(shortURL string, originalURL string, cookie string) error {
 	err := d.dbconn.Ping()
 	if err != nil {
@@ -77,23 +79,26 @@ func (d *DB) SetData(shortURL string, originalURL string, cookie string) error {
 	return nil
 }
 
-func (d *DB) GetData(shortURL string) (string, bool) {
+// Return originalURL from DB by shortURL if row is not exist, return isFound = false
+func (d *DB) GetData(shortURL string) (originalURL string, isFound bool) {
 	err := d.dbconn.Ping()
 	if err != nil {
 		logger.Log.Warnln(err)
 	}
-	var res string
-	err = d.dbconn.QueryRow("SELECT originalurl FROM storage WHERE shorturl=$1", shortURL).Scan(&res)
-	isFound := true
+	err = d.dbconn.QueryRow("SELECT originalurl FROM storage WHERE shorturl=$1", shortURL).Scan(&originalURL)
+	isFound = true
 	if err != nil {
 		isFound = false
 	}
-	return res, isFound
+	return originalURL, isFound
 }
+
+// Close DB connection
 func (d *DB) Close() error {
 	return d.dbconn.Close()
 }
 
+// IsCookieExist return true if cookie is exist in DB
 func (d *DB) IsCookieExist(cookie string) bool {
 	err := d.dbconn.Ping()
 	if err != nil {
@@ -117,6 +122,7 @@ func (d *DB) IsCookieExist(cookie string) bool {
 	return isFound
 }
 
+// GetDataByUID return batch of URLs whitch user set.
 func (d *DB) GetDataByUID(uid uint32) []model.ResponseDataBatchByCookie {
 	var result []model.ResponseDataBatchByCookie
 
@@ -138,6 +144,7 @@ func (d *DB) GetDataByUID(uid uint32) []model.ResponseDataBatchByCookie {
 	return result
 }
 
+// IsDeleted return true if shortURL is mark as deleted
 func (d *DB) IsDeleted(shortURL string) bool {
 	err := d.dbconn.Ping()
 	if err != nil {
@@ -148,6 +155,7 @@ func (d *DB) IsDeleted(shortURL string) bool {
 	return result
 }
 
+// IsCreator return true if user is creator of shortURL else false
 func (d *DB) IsCreator(shortURL string, cookie string) bool {
 	err := d.dbconn.Ping()
 	if err != nil {
@@ -165,7 +173,8 @@ func (d *DB) IsCreator(shortURL string, cookie string) bool {
 	}
 }
 
-func (d *DB) SetIsDeleted(shortURL []string) {
+// SetIsDeleted  mark all shortURLs from slice as deleted
+func (d *DB) SetIsDeleted(shortURLs []string) {
 	err := d.dbconn.Ping()
 	if err != nil {
 		logger.Log.Warnln(err)
@@ -174,7 +183,7 @@ func (d *DB) SetIsDeleted(shortURL []string) {
 		SET isdeleted = true
 		FROM (SELECT * FROM UNNEST($1::text[]) AS t(shorturl)) AS data
 		WHERE s.shorturl = data.shorturl;`
-	_, err = d.dbconn.Exec(sqlStatement, shortURL)
+	_, err = d.dbconn.Exec(sqlStatement, shortURLs)
 	if err != nil {
 		logger.Log.Errorln("error while UPDATE isdeleted fiels in db", err)
 	}

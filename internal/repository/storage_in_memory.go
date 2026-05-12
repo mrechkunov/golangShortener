@@ -15,6 +15,7 @@ type SafeMap struct {
 	counter int
 }
 
+// NewSafeMap return ptr to new map with mutex
 func NewSafeMap() *SafeMap {
 	return &SafeMap{
 		m:       make(map[string]model.Event),
@@ -22,6 +23,7 @@ func NewSafeMap() *SafeMap {
 	}
 }
 
+// SetData insert to map new row with shortURL, originalURL, UID
 func (s *SafeMap) SetData(shortURL string, originalURL string, cookie string) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -46,22 +48,26 @@ func (s *SafeMap) SetData(shortURL string, originalURL string, cookie string) er
 	return nil
 }
 
-func (s *SafeMap) GetData(shortURL string) (string, bool) {
+// Return originalURL from map by shortURL if row is not exist, return isFound = false
+func (s *SafeMap) GetData(shortURL string) (originalURL string, isFound bool) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 	if val, ok := s.m[shortURL]; !ok {
 		return "", false
 	} else {
-		originalURL := val.OriginalURL
+		originalURL = val.OriginalURL
 		return originalURL, true
 	}
 }
+
+// IsDeleted return true if shortURL is mark as deleted
 func (s *SafeMap) IsDeleted(shortURL string) bool {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 	return s.m[shortURL].IsDeleted
 }
 
+// IsCookieExist return true if cookie is exist in map
 func (s *SafeMap) IsCookieExist(cookie string) bool {
 	// перебор всей мапы и сравнение поля cookie
 	s.mu.RLock()
@@ -75,6 +81,7 @@ func (s *SafeMap) IsCookieExist(cookie string) bool {
 	return returnValue
 }
 
+// GetDataByUID return batch of URLs whitch user set.
 func (s *SafeMap) GetDataByUID(uid uint32) []model.ResponseDataBatchByCookie {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
@@ -91,6 +98,7 @@ func (s *SafeMap) GetDataByUID(uid uint32) []model.ResponseDataBatchByCookie {
 	return result
 }
 
+// IsCreator return true if user is creator of shortURL else false
 func (s *SafeMap) IsCreator(shortURL string, cookie string) bool {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
@@ -104,6 +112,7 @@ func (s *SafeMap) Close() error {
 	return nil
 }
 
+// SetIsDeleted  mark all shortURLs from slice as deleted
 func (s *SafeMap) SetIsDeleted(shortURLs []string) {
 	s.mu.Lock()
 	defer s.mu.Unlock()

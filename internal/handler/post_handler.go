@@ -15,6 +15,7 @@ import (
 	"github.com/mrechkunov/golangShortener.git/internal/repository"
 )
 
+// PostHandler shorting url from POST request and insert it in DB
 func PostHandler(res http.ResponseWriter, req *http.Request) {
 	baseResultAdress := config.ConfigAdreses.ResultServerAdress
 	if req.Method != http.MethodPost {

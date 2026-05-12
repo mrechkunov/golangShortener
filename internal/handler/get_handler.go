@@ -14,6 +14,7 @@ import (
 const cookieName = "shorterner"
 const cookieTTL = 24 * time.Hour
 
+// GetHandler return original url if short url is exist in DB and not set as deleted
 func GetHandler(res http.ResponseWriter, req *http.Request) {
 	if req.Method != http.MethodGet {
 		http.Error(res, "Only GET requests are allowed!", http.StatusBadRequest)

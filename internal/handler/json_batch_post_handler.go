@@ -14,6 +14,7 @@ import (
 	"github.com/mrechkunov/golangShortener.git/internal/repository"
 )
 
+// JSONBatchPostHandler shorting all urls from batch and insert it in DB
 func JSONBatchPostHandler(w http.ResponseWriter, r *http.Request) {
 
 	baseResultAdress := config.ConfigAdreses.ResultServerAdress
