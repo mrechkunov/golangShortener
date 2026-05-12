@@ -81,3 +81,17 @@ func TestJSONPostHandler(t *testing.T) {
 		})
 	}
 }
+
+func BenchmarkPostHandler(b *testing.B) {
+	// 1. Создаем фиктивный запрос
+	req := httptest.NewRequest("POST", "http://localhost:8080/api/shorten", nil)
+
+	// 2. Цикл бенчмарка: b.N - количество итераций, которое Go подбирает автоматически
+	for i := 0; i < b.N; i++ {
+		// 3. Создаем ResponseRecorder для записи ответа
+		w := httptest.NewRecorder()
+
+		// 4. Вызываем обработчик напрямую
+		handler.PostHandler(w, req)
+	}
+}
