@@ -42,7 +42,6 @@ func JSONPostHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	http.SetCookie(w, cookie)
-
 	var req model.RequestData
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -65,6 +64,19 @@ func JSONPostHandler(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(resp)
 		return
 	}
+	// направляем на аудит
+	uid, err := cryptoauth.GetIDFromCookie(cookie.Value)
+	if err != nil {
+		logger.Log.Warnln(err)
+	}
+	event := model.ObserverEvent{
+		Ts:          time.Now(),
+		Action:      "shorten",
+		UserId:      uid,
+		OriginalURL: req.URL,
+	}
+	go config.PublisherAudit.Event(event)
+
 	//формируем заголовок ответа
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)

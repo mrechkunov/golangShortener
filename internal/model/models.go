@@ -1,5 +1,7 @@
 package model
 
+import "time"
+
 type RequestData struct {
 	URL string `json:"url"`
 }
@@ -37,4 +39,11 @@ type ResponseDataBatch struct {
 type ResponseDataBatchByCookie struct {
 	OriginalURL string `json:"original_url"` // "<оригинальны URL>",
 	ShortURL    string `json:"short_url"`    // "<результирующий сокращённый URL>"
+}
+
+type ObserverEvent struct {
+	Ts          time.Time `json:"ts"`      // : 12345678  unix timestamp события
+	Action      string    `json:"action"`  // : "shorten",   // действие: shorten (создание) или follow (прохождение по ссылке)
+	UserId      uint32    `json:"user_id"` // : "12315134", // идентификатор пользователя, если есть
+	OriginalURL string    `json:"url"`     // : "https://mylongdomain.com/my/long/path/to/shorten/" // оригинальный (не сокращенный) URL
 }
