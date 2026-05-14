@@ -32,7 +32,10 @@ func JSONPostHandler(w http.ResponseWriter, r *http.Request) {
 		isExist = false
 	} else {
 		isExist = repository.GetStorage().IsCookieExist(cookie.Value)
-		isValid, _ = cryptoauth.ValidateCookieSign(cookie.Value)
+		isValid, err = cryptoauth.ValidateCookieSign(cookie.Value)
+		if err != nil {
+			logger.Log.Infoln("cookie is not valid", err)
+		}
 	}
 	if !isExist || !isValid {
 		cookie = &http.Cookie{

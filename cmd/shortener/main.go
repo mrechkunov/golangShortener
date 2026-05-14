@@ -2,11 +2,8 @@ package main
 
 import (
 	"net/http"
-	"os"
-	"runtime"
-	"runtime/pprof"
 
-	//"net/http/pprof"
+	"net/http/pprof"
 	_ "net/http/pprof"
 
 	"github.com/go-chi/chi/v5"
@@ -26,6 +23,20 @@ func main() {
 
 	r := chi.NewRouter()
 
+	// mount routes to profiling
+	r.Route("/debug", func(r chi.Router) {
+		r.Get("/pprof/", pprof.Index)
+		r.Get("/pprof/cmdline", pprof.Cmdline)
+		r.Get("/pprof/profile", pprof.Profile)
+		r.Get("/pprof/symbol", pprof.Symbol)
+		r.Get("/pprof/trace", pprof.Trace)
+		r.Handle("/pprof/goroutine", pprof.Handler("goroutine"))
+		r.Handle("/pprof/heap", pprof.Handler("heap"))
+		r.Handle("/pprof/mutex", pprof.Handler("mutex"))
+		r.Handle("/pprof/threadcreate", pprof.Handler("threadcreate"))
+		r.Handle("/pprof/block", pprof.Handler("block"))
+	})
+
 	// GET Handlers
 	r.Get("/{id}", logger.WithLogging(gzipMiddleware(handler.GetHandler)))
 	r.Get("/ping", logger.WithLogging(gzipMiddleware(handler.GetHandlerPingDB)))
@@ -39,17 +50,17 @@ func main() {
 	r.Post("/api/shorten", logger.WithLogging(gzipMiddleware(handler.JSONPostHandler)))
 	r.Post("/api/shorten/batch", logger.WithLogging(gzipMiddleware(handler.JSONBatchPostHandler)))
 
-	// создаём файл журнала профилирования памяти
-	var err error
-	config.Fmem, err = os.Create(`./profiles/result.pprof`)
-	if err != nil {
-		logger.Log.Fatalln(err)
-	}
-	defer config.Fmem.Close()
-	runtime.GC() // получаем статистику по использованию памяти
-	if err := pprof.WriteHeapProfile(config.Fmem); err != nil {
-		logger.Log.Fatalln(err)
-	}
+	// // создаём файл журнала профилирования памяти
+	// var err error
+	// config.Fmem, err = os.Create(`./profiles/test.pprof`)
+	// if err != nil {
+	// 	logger.Log.Fatalln(err)
+	// }
+	// defer config.Fmem.Close()
+	// runtime.GC() // получаем статистику по использованию памяти
+	// if err := pprof.WriteHeapProfile(config.Fmem); err != nil {
+	// 	logger.Log.Fatalln(err)
+	// }
 	logger.Log.Infoln("Starting server", "addr", config.ConfigAdreses.ServerBindAdress)
 	if err := http.ListenAndServe(config.ConfigAdreses.ServerBindAdress, r); err != nil {
 		logger.Log.Fatalw(err.Error(), "event", "start server")
