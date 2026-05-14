@@ -42,7 +42,10 @@ func GetHandler(res http.ResponseWriter, req *http.Request) {
 		isExist = false
 	} else {
 		isExist = repository.GetStorage().IsCookieExist(cookie.Value)
-		isValid, _ = cryptoauth.ValidateCookieSign(cookie.Value)
+		isValid, err = cryptoauth.ValidateCookieSign(cookie.Value)
+		if err != nil {
+			logger.Log.Infoln("error while validate cookie", err)
+		}
 	}
 	if !isExist || !isValid {
 		cookie = &http.Cookie{

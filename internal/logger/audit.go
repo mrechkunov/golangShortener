@@ -5,10 +5,10 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"net/http"
 	"os"
 	"sync"
 
+	"github.com/hashicorp/go-retryablehttp"
 	"github.com/mrechkunov/golangShortener.git/internal/model"
 )
 
@@ -28,21 +28,26 @@ type Observer interface {
 type Audit struct {
 	observers []Observer
 	event     model.ObserverEvent
+	mu        sync.RWMutex
 }
 
 // Register new Observer
 func (a *Audit) RegisterObserver(o Observer) {
+	a.mu.Lock()
 	a.observers = append(a.observers, o)
+	a.mu.Unlock()
 }
 
 // Remove Observer
 func (a *Audit) RemoveObserver(o Observer) {
+	a.mu.Lock()
 	for i, observer := range a.observers {
 		if observer == o {
 			a.observers = append(a.observers[:i], a.observers[i+1:]...)
 			break
 		}
 	}
+	a.mu.Unlock()
 }
 
 // Notify all Observers
@@ -54,8 +59,10 @@ func (a *Audit) NotifyObservers() {
 
 // Get new Event and Notify all Observers
 func (a *Audit) Event(newEvent model.ObserverEvent) {
+	a.mu.Lock()
 	a.event = newEvent
 	a.NotifyObservers()
+	a.mu.Unlock()
 }
 
 // реализуем структуры и методы подписчиков
@@ -63,6 +70,7 @@ type ObserverFile struct {
 	fileName string
 	file     *os.File
 	writer   *bufio.Writer
+	mu       sync.RWMutex
 }
 
 var (
@@ -89,24 +97,25 @@ func NewObserverFile(auditFileName string) *ObserverFile {
 }
 
 func (of *ObserverFile) Update(AuditData model.ObserverEvent) {
-
 	data, err := json.Marshal(&AuditData)
 	if err != nil {
 		Log.Infoln("error while marshaling json", err)
 	}
-
+	of.mu.Lock()
 	// записываем событие в буфер
 	if _, err := of.writer.Write(data); err != nil {
 		Log.Infoln("error while write to buffer", err)
+		of.mu.Unlock()
 	}
 
 	// добавляем перенос строки
 	if err := of.writer.WriteByte('\n'); err != nil {
 		Log.Infoln("error while add new string", err)
+		of.mu.Unlock()
 	}
-
 	// записываем буфер в файл
 	of.writer.Flush()
+	of.mu.Unlock()
 }
 
 type ObserverURL struct {
@@ -131,7 +140,7 @@ func (su *ObserverURL) Update(AuditData model.ObserverEvent) {
 		Log.Infoln("error while marshaling json", err)
 	}
 	// отправка POST запроса
-	resp, err := http.Post(su.URLName, "application/json", bytes.NewBuffer(jsonData))
+	resp, err := retryablehttp.Post(su.URLName, "application/json", bytes.NewBuffer(jsonData))
 	if err != nil {
 		Log.Infoln(err)
 	}

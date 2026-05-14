@@ -74,11 +74,12 @@ func BenchmarkGetHandler(b *testing.B) {
 	// 1. Создаем фиктивный запрос
 	req := httptest.NewRequest("POST", "http://localhost:8080/api/user/urls", nil)
 
-	// 2. Цикл бенчмарка: b.N - количество итераций, которое Go подбирает автоматически
-	for i := 0; i < b.N; i++ {
+	// 2. Цикл бенчмарка: b.Loop
+	for b.Loop() {
 		// 3. Создаем ResponseRecorder для записи ответа
+		b.StopTimer()
 		w := httptest.NewRecorder()
-
+		b.StartTimer()
 		// 4. Вызываем обработчик напрямую
 		handler.GetHandler(w, req)
 	}
