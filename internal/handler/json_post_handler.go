@@ -14,6 +14,7 @@ import (
 	"github.com/mrechkunov/golangShortener.git/internal/repository"
 )
 
+// JSONPostHandler shorting url from json and insert it in DB
 func JSONPostHandler(w http.ResponseWriter, r *http.Request) {
 	baseResultAdress := config.ConfigAdreses.ResultServerAdress
 	if r.Method != http.MethodPost {
@@ -31,7 +32,10 @@ func JSONPostHandler(w http.ResponseWriter, r *http.Request) {
 		isExist = false
 	} else {
 		isExist = repository.GetStorage().IsCookieExist(cookie.Value)
-		isValid, _ = cryptoauth.ValidateCookieSign(cookie.Value)
+		isValid, err = cryptoauth.ValidateCookieSign(cookie.Value)
+		if err != nil {
+			logger.Log.Infoln("cookie is not valid", err)
+		}
 	}
 	if !isExist || !isValid {
 		cookie = &http.Cookie{
@@ -50,12 +54,12 @@ func JSONPostHandler(w http.ResponseWriter, r *http.Request) {
 
 	//сокращаем url
 	hash := sha256.Sum256([]byte(req.URL))
-	ShortURL := baseResultAdress + "/" + hex.EncodeToString(hash[:4]) // 4 байта хеша = 8 символов в hex
-
+	shortstr := hex.EncodeToString(hash[:4])
+	ShortURL := baseResultAdress + "/" + shortstr // 4 байта хеша = 8 символов в hex
 	var resp model.ResponseData
 	resp.ShortURL = ShortURL
 	// пишем в хранилище
-	err = repository.GetStorage().SetData(hex.EncodeToString(hash[:4]), req.URL, cookie.Value)
+	err = repository.GetStorage().SetData(shortstr, req.URL, cookie.Value)
 	if err != nil {
 		//формируем заголовок ответа
 		w.Header().Set("Content-Type", "application/json")

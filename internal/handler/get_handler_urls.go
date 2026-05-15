@@ -12,6 +12,7 @@ import (
 	"github.com/mrechkunov/golangShortener.git/internal/repository"
 )
 
+// GetHandlerURLs return to user all urls where user is creator
 func GetHandlerURLs(res http.ResponseWriter, req *http.Request) {
 	if req.Method != http.MethodGet {
 		http.Error(res, "Only GET requests are allowed!", http.StatusBadRequest)

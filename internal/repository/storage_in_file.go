@@ -14,12 +14,14 @@ import (
 	"github.com/mrechkunov/golangShortener.git/internal/model"
 )
 
+// Producer to write in file
 type Producer struct {
 	file *os.File
 	// добавляем Writer в Producer
 	writer *bufio.Writer
 }
 
+// NewProducer return ptr to new Producer
 func NewProducer(filename string) (*Producer, error) {
 	file, err := os.OpenFile(filename, os.O_WRONLY|os.O_CREATE, 0666)
 	if err != nil {
@@ -33,6 +35,7 @@ func NewProducer(filename string) (*Producer, error) {
 	}, nil
 }
 
+// WriteEvent write new event to buffer, add endline, write buffer to file
 func (p *Producer) WriteEvent(event *model.Event) error {
 	data, err := json.Marshal(&event)
 	if err != nil {
@@ -53,6 +56,7 @@ func (p *Producer) WriteEvent(event *model.Event) error {
 	return p.writer.Flush()
 }
 
+// WriteEvents write new events to buffer, add endline, write buffer to file
 func (p *Producer) WriteEvents(events *[]model.Event) error {
 	data, err := json.MarshalIndent(events, "", "")
 	if err != nil {
@@ -68,6 +72,7 @@ func (p *Producer) WriteEvents(events *[]model.Event) error {
 	return p.writer.Flush()
 }
 
+// Close file
 func (p *Producer) Close() {
 	p.file.Close()
 }
@@ -78,6 +83,7 @@ type Consumer struct {
 	reader *bufio.Reader
 }
 
+// NewConsumer returns new consumer to read from file
 func NewConsumer(filename string) (*Consumer, error) {
 	file, err := os.OpenFile(filename, os.O_RDONLY|os.O_CREATE, 0666)
 	if err != nil {
@@ -91,6 +97,7 @@ func NewConsumer(filename string) (*Consumer, error) {
 	}, nil
 }
 
+// ReadEvent read event from file
 func (c *Consumer) ReadEvent() (*model.Event, error) {
 	// читаем данные до символа переноса строки
 	data, err := c.reader.ReadBytes('\n')
@@ -107,6 +114,7 @@ func (c *Consumer) ReadEvent() (*model.Event, error) {
 	return &event, nil
 }
 
+// ReadEvents read events from file
 func (c *Consumer) ReadEvents() (*[]model.Event, error) {
 	// читаем данные до символа переноса строки
 	data, err := io.ReadAll(c.reader)
@@ -123,6 +131,7 @@ func (c *Consumer) ReadEvents() (*[]model.Event, error) {
 	return &events, nil
 }
 
+// Close Consumer
 func (c *Consumer) Close() {
 	c.file.Close()
 }
@@ -133,6 +142,7 @@ type SafeMapFile struct {
 	counter int
 }
 
+// NewSafeMapFile return pth to new map with mutex
 func NewSafeMapFile() *SafeMapFile {
 	var s = SafeMapFile{
 		m:       make(map[string]model.Event),
@@ -142,6 +152,7 @@ func NewSafeMapFile() *SafeMapFile {
 	return &s
 }
 
+// SetData insert to map new row with shortURL, originalURL, UID and rewrite it in to file
 func (s *SafeMapFile) SetData(shortURL string, originalURL string, cookie string) error {
 	logger.Log.Infoln("Set Data file")
 	s.mu.Lock()
@@ -179,7 +190,8 @@ func (s *SafeMapFile) SetData(shortURL string, originalURL string, cookie string
 	return nil
 }
 
-func (s *SafeMapFile) GetData(shortURL string) (string, bool) {
+// Return originalURL from DB by shortURL if row is not exist, return isFound = false
+func (s *SafeMapFile) GetData(shortURL string) (originalURL string, isFound bool) {
 	logger.Log.Infoln("Get Data file")
 	s.mu.RLock()
 	defer s.mu.RUnlock()
@@ -191,6 +203,7 @@ func (s *SafeMapFile) GetData(shortURL string) (string, bool) {
 	}
 }
 
+// ReadDataFromFile read all data from file to map
 func (s *SafeMapFile) ReadDataFromFile() {
 	if config.ConfigAdreses.JSONFile == "" {
 		logger.Log.Errorln("no file setup (Consumer)")
@@ -218,6 +231,7 @@ func (s *SafeMapFile) Close() error {
 	return nil
 }
 
+// IsCookieExist return true if cookie is exist in map
 func (s *SafeMapFile) IsCookieExist(cookie string) bool {
 	// перебор всей мапы и сравнение поля cookie
 	s.mu.RLock()
@@ -231,6 +245,7 @@ func (s *SafeMapFile) IsCookieExist(cookie string) bool {
 	return returnValue
 }
 
+// GetDataByUID return batch of URLs whitch user set.
 func (s *SafeMapFile) GetDataByUID(uid uint32) []model.ResponseDataBatchByCookie {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
@@ -247,12 +262,14 @@ func (s *SafeMapFile) GetDataByUID(uid uint32) []model.ResponseDataBatchByCookie
 	return result
 }
 
+// IsDeleted return true if shortURL is mark as deleted
 func (s *SafeMapFile) IsDeleted(shortURL string) bool {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 	return s.m[shortURL].IsDeleted
 }
 
+// IsCreator return true if user is creator of shortURL else false
 func (s *SafeMapFile) IsCreator(shortURL string, cookie string) bool {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
@@ -262,6 +279,7 @@ func (s *SafeMapFile) IsCreator(shortURL string, cookie string) bool {
 	return false
 }
 
+// SetIsDeleted  mark all shortURLs from slice as deleted
 func (s *SafeMapFile) SetIsDeleted(shortURLs []string) {
 	s.mu.Lock()
 	defer s.mu.Unlock()

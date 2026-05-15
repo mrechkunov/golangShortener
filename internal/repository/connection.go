@@ -8,6 +8,7 @@ import (
 	"github.com/mrechkunov/golangShortener.git/internal/logger"
 )
 
+// NewConnect return new connection to DB
 func NewConnect() (*sql.DB, error) {
 	db, err := sql.Open("pgx", config.ConfigAdreses.DBConnStr)
 	if err != nil {

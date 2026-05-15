@@ -1,3 +1,4 @@
+// Package handler contains all servers handlers
 package handler
 
 import (
@@ -10,6 +11,7 @@ import (
 	"github.com/mrechkunov/golangShortener.git/internal/repository"
 )
 
+// Handler для пометки на удаление сокращенной ссылки
 func DeleteHandler(c chan []string) func(res http.ResponseWriter, req *http.Request) {
 	return func(res http.ResponseWriter, req *http.Request) {
 		if req.Method != http.MethodDelete {

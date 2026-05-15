@@ -15,6 +15,7 @@ import (
 	"github.com/mrechkunov/golangShortener.git/internal/repository"
 )
 
+// PostHandler shorting url from POST request and insert it in DB
 func PostHandler(res http.ResponseWriter, req *http.Request) {
 	baseResultAdress := config.ConfigAdreses.ResultServerAdress
 	if req.Method != http.MethodPost {
@@ -32,7 +33,10 @@ func PostHandler(res http.ResponseWriter, req *http.Request) {
 		isExist = false
 	} else {
 		isExist = repository.GetStorage().IsCookieExist(cookie.Value)
-		isValid, _ = cryptoauth.ValidateCookieSign(cookie.Value)
+		isValid, err = cryptoauth.ValidateCookieSign(cookie.Value)
+		if err != nil {
+			logger.Log.Infoln("cookie is not valid", err)
+		}
 	}
 	if !isExist || !isValid {
 		cookie = &http.Cookie{

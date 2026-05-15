@@ -17,6 +17,7 @@ type Adreses struct {
 	AuditUrl           string
 }
 
+var Fmem *os.File
 var ConfigAdreses = Adreses{
 	ServerBindAdress:   "localhost:8080",
 	ResultServerAdress: "http://localhost:8080", // для работы unit теста

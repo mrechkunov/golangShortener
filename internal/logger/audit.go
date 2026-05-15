@@ -4,37 +4,43 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/json"
-	"fmt"
-	"net/http"
 	"os"
 	"sync"
 
+	"github.com/hashicorp/go-retryablehttp"
 	"github.com/mrechkunov/golangShortener.git/internal/model"
 )
 
-// интерфейс публикатора
+// Publisher interface in Audit method
 type Publisher interface {
 	RegisterObserver(o Observer) // Регистрация наблюдателя
 	RemoveObserver(o Observer)   // Удаление наблюдателя
 	NotifyObservers()            // Уведомление всех наблюдателей
 }
 
-// интерфейс подписчиков (файл/url)
+// Observer interface in Audit method (file/url)
 type Observer interface {
 	Update(model.ObserverEvent) // Метод обновления
 }
 
-// реализвция publisher
+// Audit publisher
 type Audit struct {
 	observers []Observer
 	event     model.ObserverEvent
+	mu        sync.RWMutex
 }
 
+// Register new Observer
 func (a *Audit) RegisterObserver(o Observer) {
+	a.mu.Lock()
+	defer a.mu.Unlock()
 	a.observers = append(a.observers, o)
 }
 
+// Remove Observer
 func (a *Audit) RemoveObserver(o Observer) {
+	a.mu.Lock()
+	defer a.mu.Unlock()
 	for i, observer := range a.observers {
 		if observer == o {
 			a.observers = append(a.observers[:i], a.observers[i+1:]...)
@@ -43,14 +49,17 @@ func (a *Audit) RemoveObserver(o Observer) {
 	}
 }
 
+// Notify all Observers
 func (a *Audit) NotifyObservers() {
 	for _, observer := range a.observers {
 		observer.Update(a.event)
 	}
 }
 
-// принимает новое событие и оповещает всех подписчиков
+// Get new Event and Notify all Observers
 func (a *Audit) Event(newEvent model.ObserverEvent) {
+	a.mu.Lock()
+	defer a.mu.Unlock()
 	a.event = newEvent
 	a.NotifyObservers()
 }
@@ -60,6 +69,7 @@ type ObserverFile struct {
 	fileName string
 	file     *os.File
 	writer   *bufio.Writer
+	mu       sync.RWMutex
 }
 
 var (
@@ -86,22 +96,23 @@ func NewObserverFile(auditFileName string) *ObserverFile {
 }
 
 func (of *ObserverFile) Update(AuditData model.ObserverEvent) {
-
 	data, err := json.Marshal(&AuditData)
 	if err != nil {
 		Log.Infoln("error while marshaling json", err)
 	}
-
+	of.mu.Lock()
+	defer of.mu.Unlock()
 	// записываем событие в буфер
 	if _, err := of.writer.Write(data); err != nil {
 		Log.Infoln("error while write to buffer", err)
+		of.mu.Unlock()
 	}
 
 	// добавляем перенос строки
 	if err := of.writer.WriteByte('\n'); err != nil {
 		Log.Infoln("error while add new string", err)
+		of.mu.Unlock()
 	}
-
 	// записываем буфер в файл
 	of.writer.Flush()
 }
@@ -110,6 +121,7 @@ type ObserverURL struct {
 	URLName string
 }
 
+// Return ptr to new url observer
 func NewObserverURL(auditURLName string) *ObserverURL {
 	onceURL.Do( // функция ниже выполнится только один раз
 		func() {
@@ -119,6 +131,7 @@ func NewObserverURL(auditURLName string) *ObserverURL {
 	return obsURL
 }
 
+// Update method for URL Observer
 func (su *ObserverURL) Update(AuditData model.ObserverEvent) {
 	// Маршалинг json
 	jsonData, err := json.Marshal(AuditData)
@@ -126,10 +139,9 @@ func (su *ObserverURL) Update(AuditData model.ObserverEvent) {
 		Log.Infoln("error while marshaling json", err)
 	}
 	// отправка POST запроса
-	resp, err := http.Post(su.URLName, "application/json", bytes.NewBuffer(jsonData))
+	resp, err := retryablehttp.Post(su.URLName, "application/json", bytes.NewBuffer(jsonData))
 	if err != nil {
 		Log.Infoln(err)
 	}
-	defer resp.Body.Close()
-	fmt.Println("Status:", resp.Status)
+	resp.Body.Close()
 }
