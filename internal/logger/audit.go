@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"os"
 	"sync"
 
@@ -34,20 +33,20 @@ type Audit struct {
 // Register new Observer
 func (a *Audit) RegisterObserver(o Observer) {
 	a.mu.Lock()
+	defer a.mu.Unlock()
 	a.observers = append(a.observers, o)
-	a.mu.Unlock()
 }
 
 // Remove Observer
 func (a *Audit) RemoveObserver(o Observer) {
 	a.mu.Lock()
+	defer a.mu.Unlock()
 	for i, observer := range a.observers {
 		if observer == o {
 			a.observers = append(a.observers[:i], a.observers[i+1:]...)
 			break
 		}
 	}
-	a.mu.Unlock()
 }
 
 // Notify all Observers
@@ -60,9 +59,9 @@ func (a *Audit) NotifyObservers() {
 // Get new Event and Notify all Observers
 func (a *Audit) Event(newEvent model.ObserverEvent) {
 	a.mu.Lock()
+	defer a.mu.Unlock()
 	a.event = newEvent
 	a.NotifyObservers()
-	a.mu.Unlock()
 }
 
 // реализуем структуры и методы подписчиков
@@ -102,6 +101,7 @@ func (of *ObserverFile) Update(AuditData model.ObserverEvent) {
 		Log.Infoln("error while marshaling json", err)
 	}
 	of.mu.Lock()
+	defer of.mu.Unlock()
 	// записываем событие в буфер
 	if _, err := of.writer.Write(data); err != nil {
 		Log.Infoln("error while write to buffer", err)
@@ -115,7 +115,6 @@ func (of *ObserverFile) Update(AuditData model.ObserverEvent) {
 	}
 	// записываем буфер в файл
 	of.writer.Flush()
-	of.mu.Unlock()
 }
 
 type ObserverURL struct {
@@ -144,6 +143,5 @@ func (su *ObserverURL) Update(AuditData model.ObserverEvent) {
 	if err != nil {
 		Log.Infoln(err)
 	}
-	defer resp.Body.Close()
-	fmt.Println("Status:", resp.Status)
+	resp.Body.Close()
 }

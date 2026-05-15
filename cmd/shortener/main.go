@@ -2,9 +2,7 @@ package main
 
 import (
 	"net/http"
-
 	"net/http/pprof"
-	_ "net/http/pprof"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/mrechkunov/golangShortener.git/internal/config"
@@ -50,20 +48,10 @@ func main() {
 	r.Post("/api/shorten", logger.WithLogging(gzipMiddleware(handler.JSONPostHandler)))
 	r.Post("/api/shorten/batch", logger.WithLogging(gzipMiddleware(handler.JSONBatchPostHandler)))
 
-	// // создаём файл журнала профилирования памяти
-	// var err error
-	// config.Fmem, err = os.Create(`./profiles/test.pprof`)
-	// if err != nil {
-	// 	logger.Log.Fatalln(err)
-	// }
-	// defer config.Fmem.Close()
-	// runtime.GC() // получаем статистику по использованию памяти
-	// if err := pprof.WriteHeapProfile(config.Fmem); err != nil {
-	// 	logger.Log.Fatalln(err)
-	// }
 	logger.Log.Infoln("Starting server", "addr", config.ConfigAdreses.ServerBindAdress)
 	if err := http.ListenAndServe(config.ConfigAdreses.ServerBindAdress, r); err != nil {
 		logger.Log.Fatalw(err.Error(), "event", "start server")
 	}
+
 	close(chanToDelete)
 }

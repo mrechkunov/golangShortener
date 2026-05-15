@@ -54,12 +54,12 @@ func JSONPostHandler(w http.ResponseWriter, r *http.Request) {
 
 	//сокращаем url
 	hash := sha256.Sum256([]byte(req.URL))
-	ShortURL := baseResultAdress + "/" + hex.EncodeToString(hash[:4]) // 4 байта хеша = 8 символов в hex
-
+	shortstr := hex.EncodeToString(hash[:4])
+	ShortURL := baseResultAdress + "/" + shortstr // 4 байта хеша = 8 символов в hex
 	var resp model.ResponseData
 	resp.ShortURL = ShortURL
 	// пишем в хранилище
-	err = repository.GetStorage().SetData(hex.EncodeToString(hash[:4]), req.URL, cookie.Value)
+	err = repository.GetStorage().SetData(shortstr, req.URL, cookie.Value)
 	if err != nil {
 		//формируем заголовок ответа
 		w.Header().Set("Content-Type", "application/json")
