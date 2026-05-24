@@ -3,7 +3,6 @@ package main
 import (
 	"net/http"
 	"net/http/pprof"
-	"os"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/mrechkunov/golangShortener.git/internal/config"
@@ -48,11 +47,12 @@ func main() {
 	r.Post("/", logger.WithLogging(gzipMiddleware(handler.PostHandler)))
 	r.Post("/api/shorten", logger.WithLogging(gzipMiddleware(handler.JSONPostHandler)))
 	r.Post("/api/shorten/batch", logger.WithLogging(gzipMiddleware(handler.JSONBatchPostHandler)))
-
+	// test linter uncommit for test
+	//os.Exit(21)
 	logger.Log.Infoln("Starting server", "addr", config.ConfigAdreses.ServerBindAdress)
 	if err := http.ListenAndServe(config.ConfigAdreses.ServerBindAdress, r); err != nil {
 		logger.Log.Fatalw(err.Error(), "event", "start server")
 	}
-	os.Exit(21)
+
 	close(chanToDelete)
 }
