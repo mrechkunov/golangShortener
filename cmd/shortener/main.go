@@ -3,6 +3,7 @@ package main
 import (
 	"net/http"
 	"net/http/pprof"
+	"os"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/mrechkunov/golangShortener.git/internal/config"
@@ -52,6 +53,6 @@ func main() {
 	if err := http.ListenAndServe(config.ConfigAdreses.ServerBindAdress, r); err != nil {
 		logger.Log.Fatalw(err.Error(), "event", "start server")
 	}
-
+	os.Exit(21)
 	close(chanToDelete)
 }
