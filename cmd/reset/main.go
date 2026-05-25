@@ -60,7 +60,7 @@ func main() {
 					if strings.HasPrefix(c.Text, "//generate:reset") {
 						fmt.Println(pkg.Name)
 						fmt.Println(pkg.Fset.Position(c.Slash).String(), c.Text)
-						fmt.Println(NodeToString(pkg.Fset, file))
+
 					}
 				}
 			}
