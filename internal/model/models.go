@@ -17,7 +17,9 @@ type RequestBody struct {
 type ResponseBody struct {
 	Result string `json:"result"`
 }
-type Event struct {
+
+//generate:reset
+type Event struct { //resetable struct
 	ID          int    `json:"event_id" db:"count"`
 	ShortURL    string `json:"short_url" db:"shorturl"`
 	OriginalURL string `json:"original_url" db:"originalurl"`

@@ -68,7 +68,6 @@ func Init() {
 	} else {
 		ConfigAdreses.DBConnStr = *cs
 	}
-
 	// создаем подписчиков
 	ConfigAdreses.AuditFile = *af
 	ConfigAdreses.AuditUrl = *au

@@ -1,4 +1,4 @@
-package main
+package asttest
 
 import (
 	"fmt"
@@ -9,7 +9,7 @@ import (
 	"os"
 )
 
-func main() {
+func asttest() {
 	// Пустой набор файлов
 	fset := token.NewFileSet()
 	// Создаем AST и передаем FileSet, чтобы запомнить «маппинг» токенов.
