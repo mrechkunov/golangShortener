@@ -38,11 +38,13 @@ type ResponseDataBatch struct {
 	ShortURL      string `json:"short_url"`      // "<результирующий сокращённый URL>"
 }
 
+//generate:reset
 type ResponseDataBatchByCookie struct {
 	OriginalURL string `json:"original_url"` // "<оригинальны URL>",
 	ShortURL    string `json:"short_url"`    // "<результирующий сокращённый URL>"
 }
 
+//generate:reset
 type ObserverEvent struct {
 	Ts          time.Time `json:"ts"`      // : 12345678  unix timestamp события
 	Action      string    `json:"action"`  // : "shorten",   // действие: shorten (создание) или follow (прохождение по ссылке)
