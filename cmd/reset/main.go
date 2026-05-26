@@ -148,7 +148,7 @@ func searchComment(projectDir string, comment string) {
 		return nil
 	})
 	if err != nil {
-		fmt.Printf("Ошибка обхода проекта: %v\n", err)
+		logger.Log.Warnln("Ошибка обхода проекта: %v\n", err)
 	}
 }
 
@@ -157,7 +157,7 @@ func searchComment(projectDir string, comment string) {
 // 3. написать генератор кода для всех типов структур
 func main() {
 	if len(os.Args) < 2 {
-		fmt.Println("Использование: go run main.go <путь_к_директории_проекта>")
+		logger.Log.Infoln("Использование: go run main.go <путь_к_директории_проекта>")
 		return
 	}
 	projectDir := os.Args[1]
