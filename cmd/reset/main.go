@@ -238,7 +238,6 @@ func generateResetFunc(strToGenerate []StructsToReset, fMap map[string]string) {
 		var sb strings.Builder
 		for _, fd := range stg.StructFields {
 			var generatedString string
-			fmt.Println(fd.FieldType[0:2])
 			switch fd.FieldType[0:2] {
 			case "ui":
 				generatedString = genResetDigits(fd.Name) + "\n"
