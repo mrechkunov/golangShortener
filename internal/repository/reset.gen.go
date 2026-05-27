@@ -2,11 +2,12 @@
 
 package repository
 
-import "sync"
-
 // Reset сбрасывает все поля структуры SafeMap к их нулевым значениятам.
 func (c *SafeMap) Reset() {
-	c.mu = sync.RWMutex{}
-	c.m = nil
+	if c == nil {
+		return
+	}
+	c.mu.Unlock()
+	clear(c.m)
 	c.counter = 0
 }

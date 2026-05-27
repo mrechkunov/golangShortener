@@ -25,16 +25,19 @@ package {{.PackageName}}
 const resetTemplate = `
 // Reset сбрасывает все поля структуры {{.StructName}} к их нулевым значениятам.
 func (c *{{.StructName}}) Reset() {
-{{range .StructFields}}	c.{{.Name}} = {{.ZeroValue}}
-{{end}}}`
+    if c == nil {
+        return
+    }
+`
 
 // Структура для передачи данных в шаблон
 type FieldData struct {
 	Name      string
-	ZeroValue string
+	FieldType string
 }
 
 type StructsToReset struct {
+	Path         string
 	PackageName  string
 	StructName   string
 	StructFields []FieldData
@@ -51,193 +54,292 @@ func ExprToString(expr ast.Expr) (string, error) {
 	return buf.String(), nil
 }
 
-func searchComment(projectDir string, comment string) {
-	var currentDir string
-	// Рекурсивный обход всех файлов в директории для сбора слайса с позициями комментария
-	err := filepath.Walk(projectDir, func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			return err
-		}
-
-		if info.IsDir() {
-			currentDir = path
-		}
-		var sList []StructsToReset
-
-		// Обрабатываем только Go-файлы (игнорируя директории и тесты)
-		if !info.IsDir() && strings.HasSuffix(path, ".go") && !strings.HasSuffix(path, "_test.go") {
-			// Парсим файл в AST
-			fset := token.NewFileSet()
-			f, err := parser.ParseFile(fset, path, nil, parser.ParseComments)
-			if err != nil {
-				return fmt.Errorf("ошибка парсинга %s: %v", path, err)
-			}
-			var targetComment *ast.Comment
-
-			// ищем комментации в файле
-			for _, group := range f.Comments {
-				for _, c := range group.List {
-					// если комментарий совпадает с шаблоном выводим что комментарий найден и добавляем его в слайс комментов
-					if c.Text == comment {
-						targetComment = c
-						targetPos := targetComment.End()
-						var nextNode ast.Node
-
-						// Обходим узлы AST
-						ast.Inspect(f, func(n ast.Node) bool {
-							// Если мы уже нашли нужную ноду, выходим из обхода вглубь
-							if nextNode != nil {
-								return false
-							}
-							// Нас интересуют только объявления типов
-							typeSpec, ok := n.(*ast.TypeSpec)
-							if !ok {
-								return true
-							}
-							// Проверяем, является ли тип структурой
-							structType, isStruct := typeSpec.Type.(*ast.StructType)
-							if isStruct && n.Pos() > targetPos {
-								// fmt.Printf("Найдена структура: %s\n", typeSpec.Name.Name)
-								// fmt.Println("Имя пакета:", f.Name.Name)
-								var s StructsToReset
-								s.PackageName = f.Name.Name
-								s.StructName = typeSpec.Name.Name
-								var fd FieldData
-								// Перебираем поля структуры
-								for _, field := range structType.Fields.List {
-									for _, name := range field.Names {
-										//fmt.Printf("  Поле: %s, Тип: %v\n", name.Name, field.Type)
-										ft, err := ExprToString(field.Type)
-										if err != nil {
-											logger.Log.Infoln(err)
-										}
-										var zv string
-										switch ft {
-										case "int", "int8", "int16", "int32", "int64", "uint8", "uint16", "uint32", "uint64":
-											zv = "0"
-										case "float32", "float64":
-											zv = "0"
-										case "string":
-											zv = "\"\""
-										case "bool":
-											zv = "false"
-										case "time.Time":
-											zv = "time.Time{}"
-										case "sync.RWMutex":
-											zv = "sync.RWMutex{}"
-										default:
-											zv = "nil"
-										}
-										fd.Name = name.Name
-										fd.ZeroValue = zv
-										s.StructFields = append(s.StructFields, fd)
-									}
-								}
-								nextNode = n
-								sList = append(sList, s)
-							}
-							return true
-						})
-
-					}
-				}
-			}
-			generateResetFunc(sList, currentDir)
-		}
-
-		return nil
-	})
-	if err != nil {
-		logger.Log.Warnln("Ошибка обхода проекта: %v\n", err)
-	}
-}
-
-// TODO
-
-// 3. написать генератор кода для всех типов структур
 func main() {
 	if len(os.Args) < 2 {
 		logger.Log.Infoln("Использование: go run main.go <путь_к_директории_проекта>")
 		return
 	}
 	projectDir := os.Args[1]
-	searchComment(projectDir, "//generate:reset")
-
-}
-
-func testprint(str []StructsToReset, path string) {
-	fmt.Println(path)
-	for _, s := range str {
-		fmt.Println("Имя пакета:", s.PackageName)
-		fmt.Println("Имя Структуры:", s.StructName)
-		for _, f := range s.StructFields {
-			fmt.Println("поле:", f.Name, " ZeroValue", f.ZeroValue)
-		}
-
+	// обходим все поддиректории и удаляем файлы все
+	err := filepath.Walk(projectDir,
+		func(path string, info os.FileInfo, err error) error {
+			if !info.IsDir() && strings.HasSuffix(path, ".gen.go") {
+				//Удаляем файл
+				err := os.Remove(path)
+				if err != nil {
+					logger.Log.Warnln("Ошибка при удалении файла:", err)
+				}
+				logger.Log.Infoln("Файл", path, " удален")
+			}
+			return err
+		})
+	if err != nil {
+		logger.Log.Warnln("ошибка при удалении файлов reset.gen.go", err)
 	}
+
+	if err != nil {
+		logger.Log.Warnln("Ошибка обхода проекта: %v\n", err)
+	}
+
+	var currentDir string
+	filesMap := make(map[string]string)
+	targetComment := "//generate:reset"
+	var sList []StructsToReset
+	// Рекурсивный обход всех файлов в директории
+	err = filepath.Walk(projectDir, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		if info.IsDir() {
+			currentDir = path
+		}
+		// Обрабатываем только Go-файлы (игнорируя директории и тесты)
+		if !info.IsDir() && strings.HasSuffix(path, ".go") && !strings.HasSuffix(path, "_test.go") {
+			// Парсим файл в AST
+			fset := token.NewFileSet()
+			f, err := parser.ParseFile(fset, path, nil, parser.ParseComments)
+			if err != nil {
+				return err
+			}
+			// ищем комментации в файле
+			for _, group := range f.Comments {
+				for _, c := range group.List {
+					// если комментарий совпадает с шаблоном выводим что комментарий найден и добавляем его в слайс комментов
+					if c.Text == targetComment { // переменная
+						targetPos := c.End()
+						strToRes, err := getStructToReset(targetPos, f, currentDir)
+						if err != nil {
+							logger.Log.Errorln(err)
+						}
+						sList = append(sList, strToRes)
+					}
+				}
+			}
+			createFilesWithHeader(sList, filesMap)
+
+		}
+		return nil
+	})
+	if err != nil {
+		logger.Log.Warnln("Ошибка обхода проекта: %v\n", err)
+	}
+	generateResetFunc(sList, filesMap)
 }
 
-func generateResetFunc(strToGenerate []StructsToReset, path string) {
-
-	if len(strToGenerate) > 0 {
-		// Парсинг шапки шаблона
-		tmpl, err := template.New("head").Parse(newFile)
-		if err != nil {
-			panic(err)
+// функция получает позицию комментария и возвращает структуру за ней
+func getStructToReset(endOfComment token.Pos, f *ast.File, path string) (str StructsToReset, err error) {
+	var nextNode ast.Node
+	// Обходим узлы AST
+	ast.Inspect(f, func(n ast.Node) bool {
+		// если мы уже нашли нужную ноду, выходим из обхода вглубь
+		if nextNode != nil {
+			return false
 		}
-		// Создание файла, куда будет записан сгенерированный код
-		filename := path + "/reset.gen.go"
-		fmt.Println(filename)
-		file, err := os.OpenFile(filename, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666)
+		// если не это не объявление типа то пропускаем
+		typeSpec, ok := n.(*ast.TypeSpec)
+		if !ok {
+			return true
+		}
+		// Проверяем, является ли тип структурой
+		structType, isStruct := typeSpec.Type.(*ast.StructType)
+		// если тип - структура и следует за нужным комментом то добавляем его в слайс
+		if isStruct && n.Pos() > endOfComment {
+			str.Path = path
+			str.PackageName = f.Name.Name
+			str.StructName = typeSpec.Name.Name
+			var fd FieldData
+			// Перебираем поля структуры
+			for _, field := range structType.Fields.List {
+				for _, name := range field.Names {
+					fd.Name = name.Name
+					fd.FieldType = parseASTType(field.Type)
+					str.StructFields = append(str.StructFields, fd)
+				}
+			}
+			nextNode = n
+		}
+		return true
+	})
+	return
+
+}
+
+// функция возвращает название типа в структуре
+func parseASTType(expr ast.Expr) string {
+	var buf bytes.Buffer
+	if err := format.Node(&buf, token.NewFileSet(), expr); err != nil {
+		return "unknown"
+	}
+	return buf.String()
+}
+
+// функция создает файлы по пути пакета в файле генерит шапку по шаблону,
+// добавляет в мапу с key - имя пакета; value - путь к файлу reset.gen.go
+func createFilesWithHeader(strs []StructsToReset, fMap map[string]string) {
+	for _, s := range strs {
+		filename := s.Path + "/reset.gen.go"
+		var fileExist bool
+		// Проверяем существование файла
+		_, err := os.Stat(filename)
+		if err == nil {
+			fileExist = true
+		} else if os.IsNotExist(err) {
+			fileExist = false
+		} else {
+			// Ошибка может указывать на проблемы с правами доступа
+			logger.Log.Infoln(err)
+		}
+		if !fileExist {
+			// Парсинг шапки шаблона
+			tmpl, err := template.New("head").Parse(newFile)
+			if err != nil {
+				panic(err)
+			}
+			// Создание файла, куда будет записан сгенерированный код шапки
+			file, err := os.OpenFile(filename, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666)
+			if err != nil {
+				logger.Log.Warnln(err)
+			}
+			defer file.Close()
+			// Применение шаблона шапки и запись в файл
+			err = tmpl.Execute(file, s)
+			if err != nil {
+				logger.Log.Errorln(err)
+			}
+			fMap[s.PackageName] = filename
+		}
+	}
+	return
+}
+
+func generateResetFunc(strToGenerate []StructsToReset, fMap map[string]string) {
+	for _, stg := range strToGenerate {
+		// Открытие файла, куда будет записан сгенерированный код
+		filename := fMap[stg.PackageName]
+		file, err := os.OpenFile(filename, os.O_APPEND|os.O_WRONLY, 0666)
 		if err != nil {
 			logger.Log.Warnln(err)
 		}
 		defer file.Close()
 
-		// Применение шаблона шапки и запись в файл
-		err = tmpl.Execute(file, strToGenerate[0])
-		if err != nil {
-			panic(err)
-		}
-
 		// Парсинг шаблона
 		tmplfuncs, err := template.New("reset").Parse(resetTemplate)
 		if err != nil {
-			panic(err)
+			logger.Log.Warnln(err)
 		}
-		for _, structToGenetate := range strToGenerate {
-			// Применение шаблона  и запись в файл
-			err = tmplfuncs.Execute(file, structToGenetate)
-			if err != nil {
-				panic(err)
-			}
-			// форматируем созданный файл
-			// Читаем исходный код файла
-			src, err := os.ReadFile(filename)
-			if err != nil {
-				log.Fatal(err)
-			}
-
-			// Применяем стандартное gofmt форматирование
-			formatted, err := format.Source(src)
-			if err != nil {
-				log.Fatal(err)
-			}
-
-			// Перезаписываем файл отформатированным кодом
-			err = os.WriteFile(filename, formatted, 0644)
-			if err != nil {
-				log.Fatal(err)
-			}
-			// Команда goimports с флагом -w (записать изменения обратно в файл)
-			cmd := exec.Command("goimports", "-w", filename)
-
-			// Запуск команды
-			err = cmd.Run()
-			if err != nil {
-				log.Fatalf("Ошибка при выполнении goimports: %v", err)
-			}
-
+		// Применение шаблона  и запись в файл
+		err = tmplfuncs.Execute(file, stg)
+		if err != nil {
+			logger.Log.Warnln(err)
 		}
+
+		// перебераем поля структуры и в зависимотси от типа поля вызываем функцию
+		// возвращающую строку для сброса данного типа
+		var sb strings.Builder
+		for _, fd := range stg.StructFields {
+			var generatedString string
+			fmt.Println(fd.FieldType[0:2])
+			switch fd.FieldType[0:2] {
+			case "ui":
+				generatedString = genResetDigits(fd.Name) + "\n"
+			case "in":
+				generatedString = genResetDigits(fd.Name) + "\n"
+			case "st":
+				generatedString = genResetString(fd.Name) + "\n"
+			case "bo":
+				generatedString = genResetBool(fd.Name) + "\n"
+			case "ma":
+				generatedString = genResetMap(fd.Name) + "\n"
+			case "*%":
+				generatedString = genResetPtr(fd.Name) + "\n"
+			case "[]":
+				generatedString = genResetSlice(fd.Name) + "\n"
+			case "ti":
+				generatedString = genResetTime(fd.Name) + "\n"
+			case "sy":
+				generatedString = genResetMutex(fd.Name) + "\n"
+			default:
+				generatedString = fd.FieldType + "\n"
+				//generatedString = genResetIncludedStruct(fd.Name) + "\n"
+			}
+			fmt.Fprintf(&sb, "%s", generatedString)
+		}
+		fmt.Fprintf(&sb, "}")
+		generated := []byte(sb.String())
+		_, err = file.Write(generated)
+		if err != nil {
+			logger.Log.Errorln(err)
+		}
+		// форматируем созданный файл
+		// Читаем исходный код файла
+		src, err := os.ReadFile(filename)
+		if err != nil {
+			log.Fatal(err)
+		}
+		// Применяем стандартное gofmt форматирование
+		formatted, err := format.Source(src)
+		if err != nil {
+			log.Fatal(err)
+		}
+		// Перезаписываем файл отформатированным кодом
+		err = os.WriteFile(filename, formatted, 0644)
+		if err != nil {
+			log.Fatal(err)
+		}
+		// Команда goimports с флагом -w (записать изменения обратно в файл)
+		cmd := exec.Command("goimports", "-w", filename)
+
+		// Запуск команды
+		err = cmd.Run()
+		if err != nil {
+			log.Fatalf("Ошибка при выполнении goimports: %v", err)
+		}
+
 	}
+
+}
+
+// rs.i = false
+func genResetBool(name string) (resetFunctionString string) {
+	return "c." + name + "=false"
+}
+
+// rs.i = 0
+func genResetDigits(name string) (resetFunctionString string) {
+	return "c." + name + "=0"
+}
+
+// rs.str = ""
+func genResetString(name string) (resetFunctionString string) {
+	return "c." + name + "=\"\""
+}
+
+// if rs.strP != nil {*rs.strP = ""}
+func genResetPtr(name string) (resetFunctionString string) {
+	return "if c." + name + " != nil {*c." + name + " = \"\"}"
+}
+
+// rs.s = rs.s[:0]
+func genResetSlice(name string) (resetFunctionString string) {
+	return "c." + name + "=c." + name + "[:0]"
+}
+
+// clear(rs.m)
+func genResetMap(name string) (resetFunctionString string) {
+	return "clear(c." + name + ")"
+}
+
+// if resetter, ok := rs.child.(interface{ Reset() }); ok && rs.child != nil {resetter.Reset()}
+func genResetIncludedStruct(name string) (resetFunctionString string) {
+	return "if resetter, ok := c." + name + ".(interface{ Reset() }); ok && c." + name + " !=nil {resetter.Reset()}"
+}
+
+// rs.t = time.Time{}
+func genResetTime(name string) (resetFunctionString string) {
+	return "c." + name + "= time.Time{}"
+}
+
+// rs.mu.Unlock()
+func genResetMutex(name string) (resetFunctionString string) {
+	return "c." + name + ".Unlock()"
 }

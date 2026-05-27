@@ -6,6 +6,9 @@ import "time"
 
 // Reset сбрасывает все поля структуры Event к их нулевым значениятам.
 func (c *Event) Reset() {
+	if c == nil {
+		return
+	}
 	c.ID = 0
 	c.ShortURL = ""
 	c.OriginalURL = ""
@@ -16,12 +19,18 @@ func (c *Event) Reset() {
 
 // Reset сбрасывает все поля структуры ResponseDataBatchByCookie к их нулевым значениятам.
 func (c *ResponseDataBatchByCookie) Reset() {
+	if c == nil {
+		return
+	}
 	c.OriginalURL = ""
 	c.ShortURL = ""
 }
 
 // Reset сбрасывает все поля структуры ObserverEvent к их нулевым значениятам.
 func (c *ObserverEvent) Reset() {
+	if c == nil {
+		return
+	}
 	c.Ts = time.Time{}
 	c.Action = ""
 	c.UserId = 0
