@@ -43,17 +43,6 @@ type StructsToReset struct {
 	StructFields []FieldData
 }
 
-func ExprToString(expr ast.Expr) (string, error) {
-	var buf bytes.Buffer
-	// fset is required to track positions; for a single expr, a new one is fine.
-	fset := token.NewFileSet()
-	err := format.Node(&buf, fset, expr)
-	if err != nil {
-		return "", err
-	}
-	return buf.String(), nil
-}
-
 func main() {
 	if len(os.Args) < 2 {
 		logger.Log.Infoln("Использование: go run main.go <путь_к_директории_проекта>")
@@ -126,7 +115,7 @@ func main() {
 	generateResetFunc(sList, filesMap)
 }
 
-// функция получает позицию комментария и возвращает структуру за ней
+// функция получает позицию комментария и возвращает структуру за ним
 func getStructToReset(endOfComment token.Pos, f *ast.File, path string) (str StructsToReset, err error) {
 	var nextNode ast.Node
 	// Обходим узлы AST
