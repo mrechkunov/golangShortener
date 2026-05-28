@@ -51,3 +51,43 @@ type ObserverEvent struct {
 	UserId      uint32    `json:"user_id"` // : "12315134", // идентификатор пользователя, если есть
 	OriginalURL string    `json:"url"`     // : "https://mylongdomain.com/my/long/path/to/shorten/" // оригинальный (не сокращенный) URL
 }
+
+// интерфейс пулов
+type ResetableStruct interface {
+	Reset()
+}
+
+// структура пулла
+type Pool[T ResetableStruct] struct {
+	pool chan T
+	new  func() T
+}
+
+// NewPool создает новый пул.
+// необходимо передать конструктор (newFunc) для создания новых объектов.
+func NewPool[T ResetableStruct](capacity int, newFunc func() T) *Pool[T] {
+	return &Pool[T]{
+		pool: make(chan T, capacity),
+		new:  newFunc,
+	}
+}
+
+// Get получает объект из пула или создает новый, если пул пуст.
+func (p *Pool[T]) Get() T {
+	select {
+	case obj := <-p.pool:
+		return obj
+	default:
+		return p.new()
+	}
+}
+
+// Put возвращает объект в пул, автоматически вызывая метод Reset().
+func (p *Pool[T]) Put(obj T) {
+	obj.Reset()
+	select {
+	case p.pool <- obj:
+	default:
+		// Пул переполнен, объект отбрасывается и уходит сборщику мусора
+	}
+}
