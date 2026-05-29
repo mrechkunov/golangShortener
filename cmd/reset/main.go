@@ -11,6 +11,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"text/template"
 
@@ -232,28 +233,58 @@ func generateResetFunc(strToGenerate []StructsToReset, fMap map[string]string) {
 		var sb strings.Builder
 		for _, fd := range stg.StructFields {
 			var generatedString string
-			switch fd.FieldType[0:2] {
-			case "ui":
-				generatedString = genResetDigits(fd.Name) + "\n"
-			case "in":
-				generatedString = genResetDigits(fd.Name) + "\n"
-			case "st":
-				generatedString = genResetString(fd.Name) + "\n"
-			case "bo":
-				generatedString = genResetBool(fd.Name) + "\n"
-			case "ma":
-				generatedString = genResetMap(fd.Name) + "\n"
-			case "*%":
+			//regexpt patterns
+			stringPattern, err := regexp.Compile(`string`)
+			if err != nil {
+				logger.Log.Warnln(err)
+			}
+			mapPattern, err := regexp.Compile(`\bmap\[`)
+			if err != nil {
+				logger.Log.Warnln(err)
+			}
+			intPattern, err := regexp.Compile(`int`)
+			if err != nil {
+				logger.Log.Warnln(err)
+			}
+			boolPattern, err := regexp.Compile(`bool`)
+			if err != nil {
+				logger.Log.Warnln(err)
+			}
+			timePattern, err := regexp.Compile(`time.Time`)
+			if err != nil {
+				logger.Log.Warnln(err)
+			}
+			ptrPattern, err := regexp.Compile(`\b\*`)
+			if err != nil {
+				logger.Log.Warnln(err)
+			}
+			mutexPattern, err := regexp.Compile(`Mutex\b`)
+			if err != nil {
+				logger.Log.Warnln(err)
+			}
+			slicePattern, err := regexp.Compile(`\b\[\]`)
+			if err != nil {
+				logger.Log.Warnln(err)
+			}
+			switch {
+			case ptrPattern.MatchString(fd.FieldType):
 				generatedString = genResetPtr(fd.Name) + "\n"
-			case "[]":
-				generatedString = genResetSlice(fd.Name) + "\n"
-			case "ti":
+			case slicePattern.MatchString(fd.FieldType):
+				generatedString = genResetSlice(fd.Name)
+			case mapPattern.MatchString(fd.FieldType):
+				generatedString = genResetMap(fd.Name) + "\n"
+			case stringPattern.MatchString(fd.FieldType):
+				generatedString = genResetString(fd.Name) + "\n"
+			case intPattern.MatchString(fd.FieldType):
+				generatedString = genResetDigits(fd.Name) + "\n"
+			case boolPattern.MatchString(fd.FieldType):
+				generatedString = genResetBool(fd.Name) + "\n"
+			case timePattern.MatchString(fd.FieldType):
 				generatedString = genResetTime(fd.Name) + "\n"
-			case "sy":
+			case mutexPattern.MatchString(fd.FieldType):
 				generatedString = genResetMutex(fd.Name) + "\n"
 			default:
-				generatedString = fd.FieldType + "\n"
-				//generatedString = genResetIncludedStruct(fd.Name) + "\n"
+				generatedString = genResetIncludedStruct(fd.Name) + "\n"
 			}
 			fmt.Fprintf(&sb, "%s", generatedString)
 		}
