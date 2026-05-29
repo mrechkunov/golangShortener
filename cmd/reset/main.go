@@ -189,12 +189,12 @@ func createFilesWithHeader(strs []StructsToReset, fMap map[string]string) {
 			if err != nil {
 				logger.Log.Warnln(err)
 			}
-			defer file.Close()
 			// Применение шаблона шапки и запись в файл
 			err = tmpl.Execute(file, s)
 			if err != nil {
 				logger.Log.Errorln(err)
 			}
+			file.Close()
 			fMap[s.PackageName] = filename
 		}
 	}
