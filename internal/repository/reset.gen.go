@@ -7,7 +7,7 @@ func (c *SafeMap) Reset() {
 	if c == nil {
 		return
 	}
-	c.mu.Unlock()
+	// skip mutex field reset
 	clear(c.m)
 	c.counter = 0
 }

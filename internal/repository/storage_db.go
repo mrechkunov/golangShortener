@@ -152,6 +152,9 @@ func (d *DB) IsDeleted(shortURL string) bool {
 	}
 	var result bool
 	err = d.dbconn.QueryRow("SELECT isdeleted FROM storage WHERE shorturl=$1", shortURL).Scan(&result)
+	if err != nil {
+		logger.Log.Warnln(err)
+	}
 	return result
 }
 

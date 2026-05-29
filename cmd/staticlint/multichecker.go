@@ -67,7 +67,7 @@ func run(pass *analysis.Pass) (interface{}, error) {
 
 			// Проходим по телу функции и ищем вызовы os.Exit
 			for _, stmt := range fn.Body.List {
-				if isOsExitCall(stmt) {
+				if isOsExitCall(stmt, pass) {
 					pass.Reportf(stmt.Pos(), "прямой вызов os.Exit() в функции main пакета main запрещен")
 				}
 			}
@@ -77,8 +77,8 @@ func run(pass *analysis.Pass) (interface{}, error) {
 	return nil, nil
 }
 
-// Проверяет, является ли выражение вызовом os.Exit
-func isOsExitCall(stmt ast.Stmt) bool {
+// Проверяет, является ли выражение вызовом os.Exit ... ,pass *analysis.Pass
+func isOsExitCall(stmt ast.Stmt, pass *analysis.Pass) bool {
 	exprStmt, ok := stmt.(*ast.ExprStmt)
 	if !ok {
 		return false
@@ -98,5 +98,6 @@ func isOsExitCall(stmt ast.Stmt) bool {
 	if !ok {
 		return false
 	}
-	return ident.Name == "os" && selExpr.Sel.Name == "Exit"
+	b := pass.TypesInfo.Uses[ident]
+	return b.Name() == "os" && selExpr.Sel.Name == "Exit"
 }

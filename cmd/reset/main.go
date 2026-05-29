@@ -54,7 +54,7 @@ func main() {
 		func(path string, info os.FileInfo, err error) error {
 			if !info.IsDir() && strings.HasSuffix(path, ".gen.go") {
 				//Удаляем файл
-				err := os.Remove(path)
+				err = os.Remove(path)
 				if err != nil {
 					logger.Log.Warnln("Ошибка при удалении файла:", err)
 				}
@@ -66,10 +66,6 @@ func main() {
 		logger.Log.Warnln("ошибка при удалении файлов reset.gen.go", err)
 	}
 
-	if err != nil {
-		logger.Log.Warnln("Ошибка обхода проекта: %v\n", err)
-	}
-
 	var currentDir string
 	filesMap := make(map[string]string)
 	targetComment := "//generate:reset"
@@ -77,6 +73,7 @@ func main() {
 	// Рекурсивный обход всех файлов в директории
 	err = filepath.Walk(projectDir, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
+			logger.Log.Warnln(err)
 			return err
 		}
 		if info.IsDir() {
@@ -96,7 +93,8 @@ func main() {
 					// если комментарий совпадает с шаблоном выводим что комментарий найден и добавляем его в слайс комментов
 					if c.Text == targetComment { // переменная
 						targetPos := c.End()
-						strToRes, err := getStructToReset(targetPos, f, currentDir)
+						var strToRes StructsToReset
+						strToRes, err = getStructToReset(targetPos, f, currentDir)
 						if err != nil {
 							logger.Log.Errorln(err)
 						}
@@ -104,7 +102,10 @@ func main() {
 					}
 				}
 			}
-			createFilesWithHeader(sList, filesMap)
+			err = createFilesWithHeader(sList, filesMap)
+			if err != nil {
+				logger.Log.Infoln(err)
+			}
 
 		}
 		return nil
@@ -164,12 +165,12 @@ func parseASTType(expr ast.Expr) string {
 
 // функция создает файлы по пути пакета в файле генерит шапку по шаблону,
 // добавляет в мапу с key - имя пакета; value - путь к файлу reset.gen.go
-func createFilesWithHeader(strs []StructsToReset, fMap map[string]string) {
+func createFilesWithHeader(strs []StructsToReset, fMap map[string]string) (err error) {
 	for _, s := range strs {
 		filename := s.Path + "/reset.gen.go"
 		var fileExist bool
 		// Проверяем существование файла
-		_, err := os.Stat(filename)
+		_, err = os.Stat(filename)
 		if err == nil {
 			fileExist = true
 		} else if os.IsNotExist(err) {
@@ -178,21 +179,25 @@ func createFilesWithHeader(strs []StructsToReset, fMap map[string]string) {
 			// Ошибка может указывать на проблемы с правами доступа
 			logger.Log.Infoln(err)
 		}
+		err = nil // сбрасываем ошибку
 		if !fileExist {
 			// Парсинг шапки шаблона
 			tmpl, err := template.New("head").Parse(newFile)
 			if err != nil {
-				panic(err)
+				logger.Log.Warnln(err)
+				return err
 			}
 			// Создание файла, куда будет записан сгенерированный код шапки
 			file, err := os.OpenFile(filename, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666)
 			if err != nil {
 				logger.Log.Warnln(err)
+				return err
 			}
 			// Применение шаблона шапки и запись в файл
 			err = tmpl.Execute(file, s)
 			if err != nil {
-				logger.Log.Errorln(err)
+				logger.Log.Warnln(err)
+				return err
 			}
 			file.Close()
 			fMap[s.PackageName] = filename
@@ -329,5 +334,5 @@ func genResetTime(name string) (resetFunctionString string) {
 
 // rs.mu.Unlock()
 func genResetMutex(name string) (resetFunctionString string) {
-	return "c." + name + ".Unlock()"
+	return "// skip mutex field reset" //"c." + name + ".Unlock()"
 }
