@@ -98,3 +98,14 @@ Showing top 10 nodes out of 55
 
 выводы: тяжелые функции лучше всего делать один раз и сохранять результаты в переменную
 работа с БД занимает меньше памяти на стеке.
+
+
+Для установки значений переменным 
+var buildVersion string = "N/A"
+var buildDate string = "N/A"
+var buildCommit string = "N/A"
+при компиляции, необходимо добавить флаг
+ -ldflags "-X main.<var>=<value>"
+ например:
+ go build -ldflags "-X main.buildVersion=v1.0.1" ./cmd/shortener/.
+ 

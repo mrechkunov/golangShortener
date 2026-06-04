@@ -9,6 +9,7 @@ import (
 	"github.com/mrechkunov/golangShortener.git/internal/model"
 )
 
+//generate:reset
 type SafeMap struct {
 	mu      sync.RWMutex
 	m       map[string]model.Event

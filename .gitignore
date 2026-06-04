@@ -9,12 +9,19 @@
 *.test
 # storage file
 file.txt
+# text files
+*.txt
 # Output of the go coverage tool, specifically when used with LiteIDE
 *.out
 
 # Binaries
 cmd/shortener/main
 cmd/shortener/shortener
+cmd/shortener/multichecker
+cmd/reset/main
+gen
+shortener
+
 
 # Dependency directories (remove the comment below to include it)
 vendor/
