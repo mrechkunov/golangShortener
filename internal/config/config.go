@@ -15,6 +15,7 @@ type Adreses struct {
 	DBConnStr          string
 	AuditFile          string
 	AuditUrl           string
+	HttpsEnable        bool
 }
 
 var Fmem *os.File
@@ -36,6 +37,7 @@ func Init() {
 	cs := flag.String("d", "", "default DBConnStr")
 	af := flag.String("audit-file", "", "default audit file")
 	au := flag.String("audit-url", "", "default audit url")
+	se := flag.Bool("s", false, "https enable")
 	//jf := flag.String("f", "file.txt", "default storage file")
 	//cs := flag.String("d", "postgres://yapra:yaprapass@10.254.40.123:5432/yandexpracticum?sslmode=disable", "default DBConnStr")
 	flag.Parse()
@@ -45,6 +47,11 @@ func Init() {
 		ConfigAdreses.ServerBindAdress = serverAddress
 	} else {
 		ConfigAdreses.ServerBindAdress = *ba
+	}
+	if _, isEnvHttpsEnable := os.LookupEnv("ENABLE_HTTPS"); isEnvHttpsEnable {
+		ConfigAdreses.HttpsEnable = true
+	} else {
+		ConfigAdreses.HttpsEnable = *se
 	}
 	if baseURL, isEnvResSrv := os.LookupEnv("BASE_URL"); isEnvResSrv {
 		ConfigAdreses.ResultServerAdress = baseURL

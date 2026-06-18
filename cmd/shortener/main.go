@@ -11,6 +11,7 @@ import (
 	"github.com/mrechkunov/golangShortener.git/internal/logger"
 	"github.com/mrechkunov/golangShortener.git/internal/repository"
 	"github.com/mrechkunov/golangShortener.git/internal/service"
+	"golang.org/x/crypto/acme/autocert"
 )
 
 var buildVersion string = "N/A"
@@ -54,9 +55,34 @@ func main() {
 	r.Post("/", logger.WithLogging(gzipMiddleware(handler.PostHandler)))
 	r.Post("/api/shorten", logger.WithLogging(gzipMiddleware(handler.JSONPostHandler)))
 	r.Post("/api/shorten/batch", logger.WithLogging(gzipMiddleware(handler.JSONBatchPostHandler)))
-	logger.Log.Infoln("Starting server", "addr", config.ConfigAdreses.ServerBindAdress)
-	if err := http.ListenAndServe(config.ConfigAdreses.ServerBindAdress, r); err != nil {
-		logger.Log.Fatalw(err.Error(), "event", "start server")
+
+	if config.ConfigAdreses.HttpsEnable {
+		// конструируем менеджер TLS-сертификатов
+		manager := &autocert.Manager{
+			// директория для хранения сертификатов
+			Cache: autocert.DirCache("cache-dir"),
+			// функция, принимающая Terms of Service издателя сертификатов
+			Prompt: autocert.AcceptTOS,
+			// перечень доменов, для которых будут поддерживаться сертификаты
+			HostPolicy: autocert.HostWhitelist("localhost"),
+		}
+		// конструируем сервер с поддержкой TLS
+		server := &http.Server{
+			Addr:    ":443",
+			Handler: r,
+			// для TLS-конфигурации используем менеджер сертификатов
+			TLSConfig: manager.TLSConfig(),
+		}
+		logger.Log.Infoln("starting server on https")
+		if err := server.ListenAndServeTLS("", ""); err != nil {
+			logger.Log.Fatalw(err.Error(), "event", "start server")
+		}
+
+	} else {
+		logger.Log.Infoln("starting server on http")
+		if err := http.ListenAndServe(config.ConfigAdreses.ServerBindAdress, r); err != nil {
+			logger.Log.Fatalw(err.Error(), "event", "start server")
+		}
 	}
 	close(chanToDelete)
 }
