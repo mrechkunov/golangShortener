@@ -1,9 +1,15 @@
 package main
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/http/pprof"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/mrechkunov/golangShortener.git/internal/config"
@@ -55,34 +61,56 @@ func main() {
 	r.Post("/", logger.WithLogging(gzipMiddleware(handler.PostHandler)))
 	r.Post("/api/shorten", logger.WithLogging(gzipMiddleware(handler.JSONPostHandler)))
 	r.Post("/api/shorten/batch", logger.WithLogging(gzipMiddleware(handler.JSONBatchPostHandler)))
+	// Создаем канал для получения системных сигналов
 
+	stop := make(chan os.Signal, 1)
+	signal.Notify(stop, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
+
+	// конструируем менеджер TLS-сертификатов
+	manager := &autocert.Manager{
+		// директория для хранения сертификатов
+		Cache: autocert.DirCache("cache-dir"),
+		// функция, принимающая Terms of Service издателя сертификатов
+		Prompt: autocert.AcceptTOS,
+		// перечень доменов, для которых будут поддерживаться сертификаты
+		HostPolicy: autocert.HostWhitelist("localhost"),
+	}
+	var server http.Server
+	// конструируем сервер
 	if config.ConfigAdreses.HttpsEnable {
-		// конструируем менеджер TLS-сертификатов
-		manager := &autocert.Manager{
-			// директория для хранения сертификатов
-			Cache: autocert.DirCache("cache-dir"),
-			// функция, принимающая Terms of Service издателя сертификатов
-			Prompt: autocert.AcceptTOS,
-			// перечень доменов, для которых будут поддерживаться сертификаты
-			HostPolicy: autocert.HostWhitelist("localhost"),
-		}
-		// конструируем сервер с поддержкой TLS
-		server := &http.Server{
-			Addr:    ":443",
-			Handler: r,
-			// для TLS-конфигурации используем менеджер сертификатов
-			TLSConfig: manager.TLSConfig(),
-		}
-		logger.Log.Infoln("starting server on https")
-		if err := server.ListenAndServeTLS("", ""); err != nil {
-			logger.Log.Fatalw(err.Error(), "event", "start server")
-		}
+		server.Addr = config.ConfigAdreses.ServerBindAdress
+		server.Handler = r
+		server.TLSConfig = manager.TLSConfig()
+		logger.Log.Infoln("server starting:", config.ConfigAdreses.ServerBindAdress, "https")
+		go func() {
+			if err := server.ListenAndServeTLS("", ""); err != nil && !errors.Is(err, http.ErrServerClosed) {
+				logger.Log.Fatalw(err.Error(), "event", "start server")
+			}
+
+		}()
 
 	} else {
-		logger.Log.Infoln("starting server on http")
-		if err := http.ListenAndServe(config.ConfigAdreses.ServerBindAdress, r); err != nil {
-			logger.Log.Fatalw(err.Error(), "event", "start server")
-		}
+		server.Addr = config.ConfigAdreses.ServerBindAdress
+		server.Handler = r
+		logger.Log.Infoln("server starting:", config.ConfigAdreses.ServerBindAdress, "http")
+		go func() {
+			if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+				logger.Log.Fatalw(err.Error(), "event", "start server")
+			}
+
+		}()
+	}
+	<-stop
+	logger.Log.Infoln("Получен сигнал завершения. Начинаем graceful shutdown...")
+
+	// Создаем контекст с таймаутом для завершения активных запросов
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	// Пытаемся плавно остановить сервер
+	if err := server.Shutdown(ctx); err != nil {
+		logger.Log.Infoln("Сервер завершился с ошибкой: %v\n", err)
+	} else {
+		logger.Log.Infoln("Сервер остановлен корректно.")
 	}
 	close(chanToDelete)
 }
