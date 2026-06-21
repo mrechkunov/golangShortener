@@ -3,7 +3,6 @@ package config
 import (
 	"encoding/json"
 	"flag"
-	"fmt"
 	"os"
 
 	"github.com/mrechkunov/golangShortener.git/internal/logger"
@@ -14,7 +13,7 @@ type Adreses struct {
 	ResultServerAdress string `json:"base_url"`
 	MigrationsPath     string
 	JSONFile           string `json:"file_storage_path"`
-	DBConnStr          string
+	DBConnStr          string `json:"database_dsn"`
 	AuditFile          string
 	AuditUrl           string
 	HttpsEnable        bool `json:"enable_https"`
@@ -55,7 +54,6 @@ func Init() {
 	} else {
 		ConfigFileAddress = *cf
 	}
-	fmt.Println("config file address:", ConfigFileAddress)
 	// если есть адрес конфига, парсим сначала его и присваеваем все значения структуре конфигурации
 	if ConfigFileAddress != "" {
 		// Считайтываем файл целиком
@@ -113,6 +111,9 @@ func Init() {
 		ConfigAdreses.DBConnStr = dbConnStr
 	} else {
 		ConfigAdreses.DBConnStr = *cs
+	}
+	if ConfigAdreses.DBConnStr == "" && ConfigFileData.DBConnStr != "" {
+		ConfigAdreses.DBConnStr = ConfigFileData.DBConnStr
 	}
 	// создаем подписчиков
 	ConfigAdreses.AuditFile = *af

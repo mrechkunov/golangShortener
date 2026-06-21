@@ -75,12 +75,13 @@ func main() {
 		// перечень доменов, для которых будут поддерживаться сертификаты
 		HostPolicy: autocert.HostWhitelist("localhost"),
 	}
-	var server http.Server
+	var server = &http.Server{
+		Addr:      config.ConfigAdreses.ServerBindAdress,
+		Handler:   r,
+		TLSConfig: manager.TLSConfig(),
+	}
 	// конструируем сервер
 	if config.ConfigAdreses.HttpsEnable {
-		server.Addr = config.ConfigAdreses.ServerBindAdress
-		server.Handler = r
-		server.TLSConfig = manager.TLSConfig()
 		logger.Log.Infoln("server starting:", config.ConfigAdreses.ServerBindAdress, "https")
 		go func() {
 			if err := server.ListenAndServeTLS("", ""); err != nil && !errors.Is(err, http.ErrServerClosed) {
@@ -90,8 +91,6 @@ func main() {
 		}()
 
 	} else {
-		server.Addr = config.ConfigAdreses.ServerBindAdress
-		server.Handler = r
 		logger.Log.Infoln("server starting:", config.ConfigAdreses.ServerBindAdress, "http")
 		go func() {
 			if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
@@ -105,12 +104,12 @@ func main() {
 	logger.Log.Infoln("Получен сигнал завершения. Начинаем graceful shutdown...")
 	// Создаем контекст с таймаутом для завершения активных запросов
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
-	defer cancel()
 	// Пытаемся плавно остановить сервер
 	if err := server.Shutdown(ctx); err != nil {
 		logger.Log.Infoln("Сервер завершился с ошибкой: %v\n", err)
 	} else {
 		logger.Log.Infoln("Сервер остановлен корректно.")
 	}
+	cancel()
 	close(chanToDelete)
 }
