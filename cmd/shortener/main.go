@@ -106,7 +106,7 @@ func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	// Пытаемся плавно остановить сервер
 	if err := server.Shutdown(ctx); err != nil {
-		logger.Log.Infoln("Сервер завершился с ошибкой: %v\n", err)
+		logger.Log.Infoln("Сервер завершился с ошибкой:", err)
 	} else {
 		logger.Log.Infoln("Сервер остановлен корректно.")
 	}
