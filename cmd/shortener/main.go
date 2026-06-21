@@ -84,7 +84,7 @@ func main() {
 		logger.Log.Infoln("server starting:", config.ConfigAdreses.ServerBindAdress, "https")
 		go func() {
 			if err := server.ListenAndServeTLS("", ""); err != nil && !errors.Is(err, http.ErrServerClosed) {
-				logger.Log.Fatalw(err.Error(), "event", "start server")
+				logger.Log.Fatalln(err.Error())
 			}
 
 		}()
@@ -95,16 +95,16 @@ func main() {
 		logger.Log.Infoln("server starting:", config.ConfigAdreses.ServerBindAdress, "http")
 		go func() {
 			if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
-				logger.Log.Fatalw(err.Error(), "event", "start server")
+				logger.Log.Fatalln(err.Error())
 			}
 
 		}()
 	}
+	// ловим сигналы
 	<-stop
 	logger.Log.Infoln("Получен сигнал завершения. Начинаем graceful shutdown...")
-
 	// Создаем контекст с таймаутом для завершения активных запросов
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 	// Пытаемся плавно остановить сервер
 	if err := server.Shutdown(ctx); err != nil {
