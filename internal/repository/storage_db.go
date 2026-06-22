@@ -191,7 +191,22 @@ func (d *DB) SetIsDeleted(shortURLs []string) {
 	}
 }
 
-func (d *DB) GetStatData() (statdata model.ResponseStatData) {
-
+func (d *DB) GetStatData() (statData model.ResponseStatData) {
+	err := d.dbconn.QueryRow("SELECT COUNT(DISTINCT shorturl) FROM storage;").Scan(&statData.Urls)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			statData.Urls = 0
+		} else {
+			logger.Log.Infoln(err)
+		}
+	}
+	err = d.dbconn.QueryRow("SELECT COUNT(DISTINCT cookie) FROM storage;").Scan(&statData.Users)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			statData.Users = 0
+		} else {
+			logger.Log.Infoln(err)
+		}
+	}
 	return
 }

@@ -2,10 +2,10 @@ package handler
 
 import (
 	"encoding/json"
+	"net"
 	"net/http"
-	"time"
 
-	"github.com/mrechkunov/golangShortener.git/internal/cryptoauth"
+	"github.com/mrechkunov/golangShortener.git/internal/config"
 	"github.com/mrechkunov/golangShortener.git/internal/logger"
 	"github.com/mrechkunov/golangShortener.git/internal/repository"
 )
@@ -17,67 +17,28 @@ func GetHandlerStats(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	//проверяем cookie если нет/не проходит проверку, выдаем новую
-	var isExist, isValid bool
-	var cookie *http.Cookie
-	cookie, err := req.Cookie(cookieName)
-	if err != nil {
-		logger.Log.Infoln("cookie is not exist in request", err)
-		isExist = false
-	} else {
-		isExist = repository.GetStorage().IsCookieExist(cookie.Value)
-		isValid, _ = cryptoauth.ValidateCookieSign(cookie.Value)
-	}
-	if !isValid {
-		cookie = &http.Cookie{
-			Name:     cookieName,
-			Value:    cryptoauth.GenerateNewCookie(),
-			Expires:  time.Now().Add(cookieTTL),
-			HttpOnly: true,
-		}
-		http.SetCookie(res, cookie)
-		http.Error(res, "cookie is not valid", http.StatusNoContent)
+	//если trusted subnet не задана, запрещаем вызов хэндлера
+	if config.ConfigAdreses.TrustedSubnet == "" {
+		http.Error(res, "No trusted subnet set", http.StatusForbidden)
 		return
 	}
-	if !isExist {
-		logger.Log.Infoln("cookie is not exist in storage")
-		cookie = &http.Cookie{
-			Name:     cookieName,
-			Value:    cryptoauth.GenerateNewCookie(),
-			Expires:  time.Now().Add(24 * time.Hour),
-			HttpOnly: true,
-		}
-		http.SetCookie(res, cookie)
-		res.Header().Set("Content-Type", "application/json")
-		http.Error(res, "cookie is not exist in storage", http.StatusOK)
-		return
-	}
-	// uid, err := cryptoauth.GetIDFromCookie(cookie.Value)
-	// if err != nil {
-	// 	logger.Log.Infoln("no ID in cookie")
-	// 	http.Error(res, "no ID in cookie", http.StatusUnauthorized)
-	// 	cookie = &http.Cookie{
-	// 		Name:     cookieName,
-	// 		Value:    cryptoauth.GenerateNewCookie(),
-	// 		Expires:  time.Now().Add(24 * time.Hour),
-	// 		HttpOnly: true,
-	// 	}
-	// 	http.SetCookie(res, cookie)
-	// 	res.Header().Set("Content-Type", "application/json")
-	// 	return
-	// }
 
+	// проверить есть ли IP адрес в хедере X-Real-IP
+	// читаем хедер
+	realIP := req.Header.Get("X-Real-IP")
+	// Парсим CIDR
+	_, ipNet, err := net.ParseCIDR(config.ConfigAdreses.TrustedSubnet)
+	if err != nil {
+		logger.Log.Warnln("Ошибка при парсинге CIDR:", err)
+		return
+	}
+	if !ipNet.Contains(net.ParseIP(realIP)) {
+		http.Error(res, "IP Address not in trusted subnet", http.StatusForbidden)
+		return
+	}
 	// Выбрать из хранилища данные статистики
 	responseStatData := repository.GetStorage().GetStatData()
-
-	cookie = &http.Cookie{
-		Name:     cookieName,
-		Value:    cookie.Value,
-		Expires:  time.Now().Add(24 * time.Hour),
-		HttpOnly: true,
-	}
 	// формируем и записываем ответ сервера
-	http.SetCookie(res, cookie)
 	res.Header().Set("Content-Type", "application/json")
 	res.WriteHeader(http.StatusOK)
 	json.NewEncoder(res).Encode(responseStatData)
