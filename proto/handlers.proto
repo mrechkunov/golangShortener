@@ -1,6 +1,6 @@
 edition = "2023";
 
-package mrechkunov.golangShortener.mypb;
+package mrechkunov.golangShortener.proto;
 import "google/protobuf/empty.proto";
 
 option go_package = "github.com/mrechkunov/golangShortener.git/proto"; 
@@ -27,12 +27,12 @@ message URLExpandResponse {
   string result = 1;
 }
 
+message URLData {
+  string short_url = 1;
+  string original_url = 2;
+} 
 
 message UserURLsResponse {
   repeated URLData url = 1;
 }
 
-message URLData {
-  string short_url = 1;
-  string original_url = 2;
-} 
