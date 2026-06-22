@@ -53,6 +53,7 @@ func main() {
 	r.Get("/{id}", logger.WithLogging(gzipMiddleware(handler.GetHandler)))
 	r.Get("/ping", logger.WithLogging(gzipMiddleware(handler.GetHandlerPingDB)))
 	r.Get("/api/user/urls", logger.WithLogging(gzipMiddleware(handler.GetHandlerURLs)))
+	r.Get("/api/internal/stats", logger.WithLogging(gzipMiddleware(handler.GetHandlerStats)))
 	chanToDelete := make(chan []string)
 	go service.SetIsDeleted(chanToDelete)
 	// DELETE Handlers

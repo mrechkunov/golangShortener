@@ -44,6 +44,11 @@ type ResponseDataBatchByCookie struct {
 	ShortURL    string `json:"short_url"`    // "<результирующий сокращённый URL>"
 }
 
+type ResponseStatData struct {
+	Urls  int `json:"urls"`  // количество сокращённых URL в сервисе
+	Users int `json:"users"` // количество пользователей в сервисе
+}
+
 //generate:reset
 type ObserverEvent struct {
 	Ts          time.Time `json:"ts"`      // : 12345678  unix timestamp события
