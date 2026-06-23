@@ -2,6 +2,8 @@ package service
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"errors"
 
 	"github.com/mrechkunov/golangShortener.git/internal/config"
@@ -53,6 +55,20 @@ func (g *ShortenerServer) ListUserURLs(ctx context.Context, e *emptypb.Empty) (o
 
 // ExplandURLS return original url if short url is exist in DB and not set as deleted
 func (g *ShortenerServer) ExpandURL(ctx context.Context, in *pb.URLExpandRequest) (out *pb.URLExpandResponse, err error) {
+	// читаем метаданные и извлекаем токен
+	md, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
+		return nil, status.Error(codes.InvalidArgument, "no metadata found")
+	}
+	// проверяем токен
+	if values := md["authorization"]; len(values) > 0 {
+		token := values[0]
+		isExist := repository.GetStorage().IsCookieExist(token)
+		if !isExist {
+			logger.Log.Infoln("not authorizated user")
+			return nil, status.Error(codes.InvalidArgument, "not authorizated user")
+		}
+	}
 	shortURL := in.GetId()
 	shortURL = shortURL[1:]
 	longURL, isFound := repository.GetStorage().GetData(shortURL)
@@ -70,6 +86,33 @@ func (g *ShortenerServer) ExpandURL(ctx context.Context, in *pb.URLExpandRequest
 
 // ShortenURL shorting url from json and insert it in DB
 func (g *ShortenerServer) ShortenURL(ctx context.Context, in *pb.URLShortenRequest) (out *pb.URLShortenResponse, err error) {
+	baseResultAdress := config.ConfigAdreses.ResultServerAdress
+	// проверяем токен
+	var token string
+	// читаем метаданные и извлекаем токен
+	md, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
+		return nil, status.Error(codes.InvalidArgument, "no metadata found")
+	}
+	if values := md["authorization"]; len(values) > 0 {
+		token = values[0]
+		isExist := repository.GetStorage().IsCookieExist(token)
+		if !isExist {
+			logger.Log.Infoln("not authorizated user")
+			return nil, status.Error(codes.InvalidArgument, "not authorizated user")
+		}
+	}
+	originalUrl := in.GetUrl()
+	//сокращаем url
+	hash := sha256.Sum256([]byte(originalUrl))
+	shortstr := hex.EncodeToString(hash[:4])
+	ShortURL := baseResultAdress + "/" + shortstr // 4 байта хеша = 8 символов в hex
+	out.SetResult(ShortURL)
+	// пишем в хранилище
+	err = repository.GetStorage().SetData(shortstr, originalUrl, token)
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, "ulr is exist")
+	}
 
-	return
+	return out, nil
 }
