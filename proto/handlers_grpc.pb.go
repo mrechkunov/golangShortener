@@ -20,177 +20,177 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	ShortenerService_ShortenURL_FullMethodName   = "/mrechkunov.golangShortener.proto.ShortenerService/ShortenURL"
-	ShortenerService_ExpandURL_FullMethodName    = "/mrechkunov.golangShortener.proto.ShortenerService/ExpandURL"
-	ShortenerService_ListUserURLs_FullMethodName = "/mrechkunov.golangShortener.proto.ShortenerService/ListUserURLs"
+	Shortener_ShortenURL_FullMethodName   = "/mrechkunov.golangShortener.proto.Shortener/ShortenURL"
+	Shortener_ExpandURL_FullMethodName    = "/mrechkunov.golangShortener.proto.Shortener/ExpandURL"
+	Shortener_ListUserURLs_FullMethodName = "/mrechkunov.golangShortener.proto.Shortener/ListUserURLs"
 )
 
-// ShortenerServiceClient is the client API for ShortenerService service.
+// ShortenerClient is the client API for Shortener service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
-type ShortenerServiceClient interface {
+type ShortenerClient interface {
 	ShortenURL(ctx context.Context, in *URLShortenRequest, opts ...grpc.CallOption) (*URLShortenResponse, error)
 	ExpandURL(ctx context.Context, in *URLExpandRequest, opts ...grpc.CallOption) (*URLExpandResponse, error)
 	ListUserURLs(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*UserURLsResponse, error)
 }
 
-type shortenerServiceClient struct {
+type shortenerClient struct {
 	cc grpc.ClientConnInterface
 }
 
-func NewShortenerServiceClient(cc grpc.ClientConnInterface) ShortenerServiceClient {
-	return &shortenerServiceClient{cc}
+func NewShortenerClient(cc grpc.ClientConnInterface) ShortenerClient {
+	return &shortenerClient{cc}
 }
 
-func (c *shortenerServiceClient) ShortenURL(ctx context.Context, in *URLShortenRequest, opts ...grpc.CallOption) (*URLShortenResponse, error) {
+func (c *shortenerClient) ShortenURL(ctx context.Context, in *URLShortenRequest, opts ...grpc.CallOption) (*URLShortenResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(URLShortenResponse)
-	err := c.cc.Invoke(ctx, ShortenerService_ShortenURL_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, Shortener_ShortenURL_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *shortenerServiceClient) ExpandURL(ctx context.Context, in *URLExpandRequest, opts ...grpc.CallOption) (*URLExpandResponse, error) {
+func (c *shortenerClient) ExpandURL(ctx context.Context, in *URLExpandRequest, opts ...grpc.CallOption) (*URLExpandResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(URLExpandResponse)
-	err := c.cc.Invoke(ctx, ShortenerService_ExpandURL_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, Shortener_ExpandURL_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *shortenerServiceClient) ListUserURLs(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*UserURLsResponse, error) {
+func (c *shortenerClient) ListUserURLs(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*UserURLsResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(UserURLsResponse)
-	err := c.cc.Invoke(ctx, ShortenerService_ListUserURLs_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, Shortener_ListUserURLs_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-// ShortenerServiceServer is the server API for ShortenerService service.
-// All implementations must embed UnimplementedShortenerServiceServer
+// ShortenerServer is the server API for Shortener service.
+// All implementations must embed UnimplementedShortenerServer
 // for forward compatibility.
-type ShortenerServiceServer interface {
+type ShortenerServer interface {
 	ShortenURL(context.Context, *URLShortenRequest) (*URLShortenResponse, error)
 	ExpandURL(context.Context, *URLExpandRequest) (*URLExpandResponse, error)
 	ListUserURLs(context.Context, *emptypb.Empty) (*UserURLsResponse, error)
-	mustEmbedUnimplementedShortenerServiceServer()
+	mustEmbedUnimplementedShortenerServer()
 }
 
-// UnimplementedShortenerServiceServer must be embedded to have
+// UnimplementedShortenerServer must be embedded to have
 // forward compatible implementations.
 //
 // NOTE: this should be embedded by value instead of pointer to avoid a nil
 // pointer dereference when methods are called.
-type UnimplementedShortenerServiceServer struct{}
+type UnimplementedShortenerServer struct{}
 
-func (UnimplementedShortenerServiceServer) ShortenURL(context.Context, *URLShortenRequest) (*URLShortenResponse, error) {
+func (UnimplementedShortenerServer) ShortenURL(context.Context, *URLShortenRequest) (*URLShortenResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ShortenURL not implemented")
 }
-func (UnimplementedShortenerServiceServer) ExpandURL(context.Context, *URLExpandRequest) (*URLExpandResponse, error) {
+func (UnimplementedShortenerServer) ExpandURL(context.Context, *URLExpandRequest) (*URLExpandResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ExpandURL not implemented")
 }
-func (UnimplementedShortenerServiceServer) ListUserURLs(context.Context, *emptypb.Empty) (*UserURLsResponse, error) {
+func (UnimplementedShortenerServer) ListUserURLs(context.Context, *emptypb.Empty) (*UserURLsResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ListUserURLs not implemented")
 }
-func (UnimplementedShortenerServiceServer) mustEmbedUnimplementedShortenerServiceServer() {}
-func (UnimplementedShortenerServiceServer) testEmbeddedByValue()                          {}
+func (UnimplementedShortenerServer) mustEmbedUnimplementedShortenerServer() {}
+func (UnimplementedShortenerServer) testEmbeddedByValue()                   {}
 
-// UnsafeShortenerServiceServer may be embedded to opt out of forward compatibility for this service.
-// Use of this interface is not recommended, as added methods to ShortenerServiceServer will
+// UnsafeShortenerServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to ShortenerServer will
 // result in compilation errors.
-type UnsafeShortenerServiceServer interface {
-	mustEmbedUnimplementedShortenerServiceServer()
+type UnsafeShortenerServer interface {
+	mustEmbedUnimplementedShortenerServer()
 }
 
-func RegisterShortenerServiceServer(s grpc.ServiceRegistrar, srv ShortenerServiceServer) {
-	// If the following call panics, it indicates UnimplementedShortenerServiceServer was
+func RegisterShortenerServer(s grpc.ServiceRegistrar, srv ShortenerServer) {
+	// If the following call panics, it indicates UnimplementedShortenerServer was
 	// embedded by pointer and is nil.  This will cause panics if an
 	// unimplemented method is ever invoked, so we test this at initialization
 	// time to prevent it from happening at runtime later due to I/O.
 	if t, ok := srv.(interface{ testEmbeddedByValue() }); ok {
 		t.testEmbeddedByValue()
 	}
-	s.RegisterService(&ShortenerService_ServiceDesc, srv)
+	s.RegisterService(&Shortener_ServiceDesc, srv)
 }
 
-func _ShortenerService_ShortenURL_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _Shortener_ShortenURL_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(URLShortenRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(ShortenerServiceServer).ShortenURL(ctx, in)
+		return srv.(ShortenerServer).ShortenURL(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: ShortenerService_ShortenURL_FullMethodName,
+		FullMethod: Shortener_ShortenURL_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ShortenerServiceServer).ShortenURL(ctx, req.(*URLShortenRequest))
+		return srv.(ShortenerServer).ShortenURL(ctx, req.(*URLShortenRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _ShortenerService_ExpandURL_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _Shortener_ExpandURL_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(URLExpandRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(ShortenerServiceServer).ExpandURL(ctx, in)
+		return srv.(ShortenerServer).ExpandURL(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: ShortenerService_ExpandURL_FullMethodName,
+		FullMethod: Shortener_ExpandURL_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ShortenerServiceServer).ExpandURL(ctx, req.(*URLExpandRequest))
+		return srv.(ShortenerServer).ExpandURL(ctx, req.(*URLExpandRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _ShortenerService_ListUserURLs_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _Shortener_ListUserURLs_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(emptypb.Empty)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(ShortenerServiceServer).ListUserURLs(ctx, in)
+		return srv.(ShortenerServer).ListUserURLs(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: ShortenerService_ListUserURLs_FullMethodName,
+		FullMethod: Shortener_ListUserURLs_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ShortenerServiceServer).ListUserURLs(ctx, req.(*emptypb.Empty))
+		return srv.(ShortenerServer).ListUserURLs(ctx, req.(*emptypb.Empty))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-// ShortenerService_ServiceDesc is the grpc.ServiceDesc for ShortenerService service.
+// Shortener_ServiceDesc is the grpc.ServiceDesc for Shortener service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
-var ShortenerService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "mrechkunov.golangShortener.proto.ShortenerService",
-	HandlerType: (*ShortenerServiceServer)(nil),
+var Shortener_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "mrechkunov.golangShortener.proto.Shortener",
+	HandlerType: (*ShortenerServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
 			MethodName: "ShortenURL",
-			Handler:    _ShortenerService_ShortenURL_Handler,
+			Handler:    _Shortener_ShortenURL_Handler,
 		},
 		{
 			MethodName: "ExpandURL",
-			Handler:    _ShortenerService_ExpandURL_Handler,
+			Handler:    _Shortener_ExpandURL_Handler,
 		},
 		{
 			MethodName: "ListUserURLs",
-			Handler:    _ShortenerService_ListUserURLs_Handler,
+			Handler:    _Shortener_ListUserURLs_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

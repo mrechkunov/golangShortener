@@ -4,12 +4,16 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
+	"net"
 	"net/http"
 	"net/http/pprof"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
+
+	pb "github.com/mrechkunov/golangShortener.git/proto"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/mrechkunov/golangShortener.git/internal/config"
@@ -18,6 +22,7 @@ import (
 	"github.com/mrechkunov/golangShortener.git/internal/repository"
 	"github.com/mrechkunov/golangShortener.git/internal/service"
 	"golang.org/x/crypto/acme/autocert"
+	"google.golang.org/grpc"
 )
 
 var buildVersion string = "N/A"
@@ -62,8 +67,27 @@ func main() {
 	r.Post("/", logger.WithLogging(gzipMiddleware(handler.PostHandler)))
 	r.Post("/api/shorten", logger.WithLogging(gzipMiddleware(handler.JSONPostHandler)))
 	r.Post("/api/shorten/batch", logger.WithLogging(gzipMiddleware(handler.JSONBatchPostHandler)))
-	// Создаем канал для получения системных сигналов
 
+	// Нужно определить порт для сервера
+	listen, err := net.Listen("tcp", ":3200")
+	if err != nil {
+		slog.Error("ошибка при инициализации listener", "error", err)
+		os.Exit(1)
+	}
+	// Создаем gRPC сервер без зарегистрированной службы
+	s := grpc.NewServer()
+	// Регистрируем сервис
+	pb.RegisterShortenerServer(s, &service.ShortenerServer{})
+	fmt.Println("сервер gRPC начал работу")
+	// Получение запроса gRpc
+	go func() {
+		if err := s.Serve(listen); err != nil {
+			slog.Error("ошибка при работе сервера", "error", err)
+			os.Exit(1)
+		}
+	}()
+
+	// Создаем канал для получения системных сигналов
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
 
@@ -111,6 +135,7 @@ func main() {
 	} else {
 		logger.Log.Infoln("Сервер остановлен корректно.")
 	}
+	s.GracefulStop()
 	cancel()
 	close(chanToDelete)
 }

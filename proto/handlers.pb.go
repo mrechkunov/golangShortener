@@ -520,8 +520,8 @@ const file_proto_handlers_proto_rawDesc = "" +
 	"\tshort_url\x18\x01 \x01(\tR\bshortUrl\x12!\n" +
 	"\foriginal_url\x18\x02 \x01(\tR\voriginalUrl\"O\n" +
 	"\x10UserURLsResponse\x12;\n" +
-	"\x03url\x18\x01 \x03(\v2).mrechkunov.golangShortener.proto.URLDataR\x03url2\xdd\x02\n" +
-	"\x10ShortenerService\x12w\n" +
+	"\x03url\x18\x01 \x03(\v2).mrechkunov.golangShortener.proto.URLDataR\x03url2\xd6\x02\n" +
+	"\tShortener\x12w\n" +
 	"\n" +
 	"ShortenURL\x123.mrechkunov.golangShortener.proto.URLShortenRequest\x1a4.mrechkunov.golangShortener.proto.URLShortenResponse\x12t\n" +
 	"\tExpandURL\x122.mrechkunov.golangShortener.proto.URLExpandRequest\x1a3.mrechkunov.golangShortener.proto.URLExpandResponse\x12Z\n" +
@@ -539,12 +539,12 @@ var file_proto_handlers_proto_goTypes = []any{
 }
 var file_proto_handlers_proto_depIdxs = []int32{
 	4, // 0: mrechkunov.golangShortener.proto.UserURLsResponse.url:type_name -> mrechkunov.golangShortener.proto.URLData
-	0, // 1: mrechkunov.golangShortener.proto.ShortenerService.ShortenURL:input_type -> mrechkunov.golangShortener.proto.URLShortenRequest
-	2, // 2: mrechkunov.golangShortener.proto.ShortenerService.ExpandURL:input_type -> mrechkunov.golangShortener.proto.URLExpandRequest
-	6, // 3: mrechkunov.golangShortener.proto.ShortenerService.ListUserURLs:input_type -> google.protobuf.Empty
-	1, // 4: mrechkunov.golangShortener.proto.ShortenerService.ShortenURL:output_type -> mrechkunov.golangShortener.proto.URLShortenResponse
-	3, // 5: mrechkunov.golangShortener.proto.ShortenerService.ExpandURL:output_type -> mrechkunov.golangShortener.proto.URLExpandResponse
-	5, // 6: mrechkunov.golangShortener.proto.ShortenerService.ListUserURLs:output_type -> mrechkunov.golangShortener.proto.UserURLsResponse
+	0, // 1: mrechkunov.golangShortener.proto.Shortener.ShortenURL:input_type -> mrechkunov.golangShortener.proto.URLShortenRequest
+	2, // 2: mrechkunov.golangShortener.proto.Shortener.ExpandURL:input_type -> mrechkunov.golangShortener.proto.URLExpandRequest
+	6, // 3: mrechkunov.golangShortener.proto.Shortener.ListUserURLs:input_type -> google.protobuf.Empty
+	1, // 4: mrechkunov.golangShortener.proto.Shortener.ShortenURL:output_type -> mrechkunov.golangShortener.proto.URLShortenResponse
+	3, // 5: mrechkunov.golangShortener.proto.Shortener.ExpandURL:output_type -> mrechkunov.golangShortener.proto.URLExpandResponse
+	5, // 6: mrechkunov.golangShortener.proto.Shortener.ListUserURLs:output_type -> mrechkunov.golangShortener.proto.UserURLsResponse
 	4, // [4:7] is the sub-list for method output_type
 	1, // [1:4] is the sub-list for method input_type
 	1, // [1:1] is the sub-list for extension type_name

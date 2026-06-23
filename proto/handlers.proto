@@ -5,7 +5,7 @@ import "google/protobuf/empty.proto";
 
 option go_package = "github.com/mrechkunov/golangShortener.git/proto"; 
 
-service ShortenerService {
+service Shortener {
   rpc ShortenURL (URLShortenRequest) returns (URLShortenResponse);
   rpc ExpandURL (URLExpandRequest) returns (URLExpandResponse);
   rpc ListUserURLs (google.protobuf.Empty) returns (UserURLsResponse);
