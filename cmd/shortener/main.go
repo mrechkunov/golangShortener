@@ -69,7 +69,7 @@ func main() {
 	r.Post("/api/shorten/batch", logger.WithLogging(gzipMiddleware(handler.JSONBatchPostHandler)))
 
 	// Нужно определить порт для сервера
-	listen, err := net.Listen("tcp", ":3200")
+	listen, err := net.Listen("tcp", config.ConfigAdreses.GRPCServerAddress)
 	if err != nil {
 		slog.Error("ошибка при инициализации listener", "error", err)
 		os.Exit(1)

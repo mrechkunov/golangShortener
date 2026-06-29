@@ -12,11 +12,6 @@ import (
 
 // GetHandlerURLs return to user all urls where user is creator
 func GetHandlerStats(res http.ResponseWriter, req *http.Request) {
-	if req.Method != http.MethodGet {
-		http.Error(res, "Only GET requests are allowed!", http.StatusBadRequest)
-		return
-	}
-
 	//если trusted subnet не задана, запрещаем вызов хэндлера
 	if config.ConfigAdreses.TrustedSubnet == "" {
 		http.Error(res, "No trusted subnet set", http.StatusForbidden)
@@ -29,7 +24,8 @@ func GetHandlerStats(res http.ResponseWriter, req *http.Request) {
 	// Парсим CIDR
 	_, ipNet, err := net.ParseCIDR(config.ConfigAdreses.TrustedSubnet)
 	if err != nil {
-		logger.Log.Warnln("Ошибка при парсинге CIDR:", err)
+		logger.Log.Warnln("Error while parsing CIDR:", err)
+		http.Error(res, "Error while parsing CIDR", http.StatusInternalServerError)
 		return
 	}
 	if !ipNet.Contains(net.ParseIP(realIP)) {
@@ -41,5 +37,10 @@ func GetHandlerStats(res http.ResponseWriter, req *http.Request) {
 	// формируем и записываем ответ сервера
 	res.Header().Set("Content-Type", "application/json")
 	res.WriteHeader(http.StatusOK)
-	json.NewEncoder(res).Encode(responseStatData)
+	err = json.NewEncoder(res).Encode(responseStatData)
+	if err != nil {
+		logger.Log.Warnln("Error while encoding JSON", err)
+		http.Error(res, "Error while encoding JSON", http.StatusInternalServerError)
+		return
+	}
 }

@@ -293,8 +293,8 @@ func (s *SafeMapFile) SetIsDeleted(shortURLs []string) {
 func (s *SafeMapFile) GetStatData() (statdata model.ResponseStatData) {
 	// Создаем map для отслеживания уникальных значений
 	uniqueMap := make(map[uint32]struct{})
-	s.mu.Lock()
-	defer s.mu.Unlock()
+	s.mu.RLock()
+	defer s.mu.RUnlock()
 	// перебираем мапу и добавляем только уникальные данные в уникальную мапу
 	for _, data := range s.m {
 		uniqueMap[data.UID] = struct{}{}

@@ -22,7 +22,7 @@ type ShortenerServer struct {
 }
 
 // ListUserURLs return to user all urls where user is creator
-func (g *ShortenerServer) ListUserURLs(ctx context.Context, e *emptypb.Empty) (out *pb.UserURLsResponse, err error) {
+func (g *ShortenerServer) ListUserURLs(ctx context.Context, e *emptypb.Empty) (*pb.UserURLsResponse, error) {
 	// читаем метаданные и извлекаем токен
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
@@ -30,6 +30,7 @@ func (g *ShortenerServer) ListUserURLs(ctx context.Context, e *emptypb.Empty) (o
 	}
 	// берем uid из токена
 	var uid uint32
+	var err error
 	if values := md["authorization"]; len(values) > 0 {
 		token := values[0]
 		uid, err = cryptoauth.GetIDFromCookie(token)
@@ -37,6 +38,9 @@ func (g *ShortenerServer) ListUserURLs(ctx context.Context, e *emptypb.Empty) (o
 			logger.Log.Infoln("no ID in metadata")
 			return nil, status.Error(codes.InvalidArgument, "error while get ID in metadata")
 		}
+	} else {
+		logger.Log.Infoln("Unauthenticated")
+		return nil, status.Error(codes.Unauthenticated, "Unauthenticated User")
 	}
 	// Выбрать из хранилища все записи с uid
 	responseBatch := repository.GetStorage().GetDataByUID(uid)
@@ -49,12 +53,15 @@ func (g *ShortenerServer) ListUserURLs(ctx context.Context, e *emptypb.Empty) (o
 		urlData.SetShortUrl(baseResultAdress + "/" + rb.ShortURL)
 		result = append(result, urlData)
 	}
-	out.SetUrl(result)
+
+	out := pb.UserURLsResponse_builder{
+		Url: result,
+	}.Build()
 	return out, nil
 }
 
 // ExplandURLS return original url if short url is exist in DB and not set as deleted
-func (g *ShortenerServer) ExpandURL(ctx context.Context, in *pb.URLExpandRequest) (out *pb.URLExpandResponse, err error) {
+func (g *ShortenerServer) ExpandURL(ctx context.Context, in *pb.URLExpandRequest) (*pb.URLExpandResponse, error) {
 	// читаем метаданные и извлекаем токен
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
@@ -73,19 +80,22 @@ func (g *ShortenerServer) ExpandURL(ctx context.Context, in *pb.URLExpandRequest
 	shortURL = shortURL[1:]
 	longURL, isFound := repository.GetStorage().GetData(shortURL)
 	if repository.GetStorage().IsDeleted(shortURL) {
-		err = errors.New("short URL is deleted")
+		err := errors.New("short URL is deleted")
 		return nil, err
 	}
 	if !isFound {
-		err = errors.New("short URL not found")
+		err := errors.New("short URL not found")
 		return nil, err
 	}
-	out.SetResult(longURL)
+
+	out := pb.URLExpandResponse_builder{
+		Result: &longURL,
+	}.Build()
 	return out, nil
 }
 
 // ShortenURL shorting url from json and insert it in DB
-func (g *ShortenerServer) ShortenURL(ctx context.Context, in *pb.URLShortenRequest) (out *pb.URLShortenResponse, err error) {
+func (g *ShortenerServer) ShortenURL(ctx context.Context, in *pb.URLShortenRequest) (*pb.URLShortenResponse, error) {
 	baseResultAdress := config.ConfigAdreses.ResultServerAdress
 	// проверяем токен
 	var token string
@@ -107,11 +117,13 @@ func (g *ShortenerServer) ShortenURL(ctx context.Context, in *pb.URLShortenReque
 	hash := sha256.Sum256([]byte(originalUrl))
 	shortstr := hex.EncodeToString(hash[:4])
 	ShortURL := baseResultAdress + "/" + shortstr // 4 байта хеша = 8 символов в hex
-	out.SetResult(ShortURL)
+	out := pb.URLShortenResponse_builder{
+		Result: &ShortURL,
+	}.Build()
 	// пишем в хранилище
-	err = repository.GetStorage().SetData(shortstr, originalUrl, token)
+	err := repository.GetStorage().SetData(shortstr, originalUrl, token)
 	if err != nil {
-		return nil, status.Error(codes.InvalidArgument, "ulr is exist")
+		return nil, status.Error(codes.AlreadyExists, "ulr is exist")
 	}
 
 	return out, nil

@@ -18,6 +18,7 @@ type Adreses struct {
 	AuditUrl           string
 	TrustedSubnet      string `json:"trusted_subnet"`
 	HttpsEnable        bool   `json:"enable_https"`
+	GRPCServerAddress  string `json:"grpc_server_address"`
 }
 
 var Fmem *os.File
@@ -28,6 +29,7 @@ var ConfigAdreses = Adreses{
 	DBConnStr:          "",
 	AuditFile:          "",
 	AuditUrl:           "",
+	GRPCServerAddress:  "",
 }
 
 var PublisherAudit logger.Audit
@@ -45,8 +47,7 @@ func Init() {
 	au := flag.String("audit-url", "", "default audit url")
 	ts := flag.String("t", "", "classless inter-domain routing (CIDR)")
 	se := flag.Bool("s", false, "https enable")
-	//jf := flag.String("f", "file.txt", "default storage file")
-	//cs := flag.String("d", "postgres://yapra:yaprapass@10.254.40.123:5432/yandexpracticum?sslmode=disable", "default DBConnStr")
+	gs := flag.String("g", "localhost:50010", "default gRPC server address")
 	flag.Parse()
 
 	// если переиенные окружения установленны, берем их, иначе берем флаг
@@ -94,6 +95,14 @@ func Init() {
 		ConfigAdreses.ResultServerAdress = ConfigFileData.ResultServerAdress
 	}
 
+	if gRPCAddress, isEnvGRPCSrv := os.LookupEnv("GRPC_ADDRESS"); isEnvGRPCSrv {
+		ConfigAdreses.GRPCServerAddress = gRPCAddress
+	} else {
+		ConfigAdreses.GRPCServerAddress = *gs
+	}
+	if ConfigAdreses.GRPCServerAddress == "localhost:50010" && ConfigFileData.GRPCServerAddress != "" {
+		ConfigAdreses.GRPCServerAddress = ConfigFileData.GRPCServerAddress
+	}
 	if migratoinsPath, isEnvMigrationsPath := os.LookupEnv("MIGRATIONS_PATH"); isEnvMigrationsPath {
 		ConfigAdreses.MigrationsPath = migratoinsPath
 	} else {
