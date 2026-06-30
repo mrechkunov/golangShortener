@@ -4,7 +4,6 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
-	"errors"
 
 	"github.com/mrechkunov/golangShortener.git/internal/config"
 	"github.com/mrechkunov/golangShortener.git/internal/cryptoauth"
@@ -14,7 +13,6 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/types/known/emptypb"
 )
 
 type ShortenerServer struct {
@@ -22,7 +20,7 @@ type ShortenerServer struct {
 }
 
 // ListUserURLs return to user all urls where user is creator
-func (g *ShortenerServer) ListUserURLs(ctx context.Context, e *emptypb.Empty) (*pb.UserURLsResponse, error) {
+func (g *ShortenerServer) ListUserURLs(ctx context.Context, e *pb.EmptyMessage) (*pb.UserURLsResponse, error) {
 	// читаем метаданные и извлекаем токен
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
@@ -65,7 +63,7 @@ func (g *ShortenerServer) ExpandURL(ctx context.Context, in *pb.URLExpandRequest
 	// читаем метаданные и извлекаем токен
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
-		return nil, status.Error(codes.InvalidArgument, "no metadata found")
+		return nil, status.Error(codes.Unauthenticated, "no metadata found")
 	}
 	// проверяем токен
 	if values := md["authorization"]; len(values) > 0 {
@@ -73,19 +71,17 @@ func (g *ShortenerServer) ExpandURL(ctx context.Context, in *pb.URLExpandRequest
 		isExist := repository.GetStorage().IsCookieExist(token)
 		if !isExist {
 			logger.Log.Infoln("not authorizated user")
-			return nil, status.Error(codes.InvalidArgument, "not authorizated user")
+			return nil, status.Error(codes.Unauthenticated, "not authorizated user")
 		}
 	}
 	shortURL := in.GetId()
 	shortURL = shortURL[1:]
 	longURL, isFound := repository.GetStorage().GetData(shortURL)
 	if repository.GetStorage().IsDeleted(shortURL) {
-		err := errors.New("short URL is deleted")
-		return nil, err
+		return nil, status.Error(codes.NotFound, "short URL is deleted")
 	}
 	if !isFound {
-		err := errors.New("short URL not found")
-		return nil, err
+		return nil, status.Error(codes.NotFound, "short URL not found")
 	}
 
 	out := pb.URLExpandResponse_builder{

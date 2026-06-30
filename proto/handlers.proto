@@ -1,15 +1,16 @@
 edition = "2023";
 
 package mrechkunov.golangShortener.proto;
-import "google/protobuf/empty.proto";
 
 option go_package = "github.com/mrechkunov/golangShortener.git/proto"; 
 
 service Shortener {
   rpc ShortenURL (URLShortenRequest) returns (URLShortenResponse);
   rpc ExpandURL (URLExpandRequest) returns (URLExpandResponse);
-  rpc ListUserURLs (google.protobuf.Empty) returns (UserURLsResponse);
+  rpc ListUserURLs (EmptyMessage) returns (UserURLsResponse);
 }
+
+message EmptyMessage {}
 
 message URLShortenRequest {
   string url = 1;

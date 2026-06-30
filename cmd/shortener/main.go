@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log/slog"
 	"net"
 	"net/http"
 	"net/http/pprof"
@@ -23,6 +22,7 @@ import (
 	"github.com/mrechkunov/golangShortener.git/internal/service"
 	"golang.org/x/crypto/acme/autocert"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 )
 
 var buildVersion string = "N/A"
@@ -68,29 +68,33 @@ func main() {
 	r.Post("/api/shorten", logger.WithLogging(gzipMiddleware(handler.JSONPostHandler)))
 	r.Post("/api/shorten/batch", logger.WithLogging(gzipMiddleware(handler.JSONBatchPostHandler)))
 
-	// Нужно определить порт для сервера
+	// Нужно определить порт для сервера из конфига
 	listen, err := net.Listen("tcp", config.ConfigAdreses.GRPCServerAddress)
 	if err != nil {
-		slog.Error("ошибка при инициализации listener", "error", err)
+		logger.Log.Warnln("ошибка при инициализации listener", "error", err)
 		os.Exit(1)
 	}
+	// Загрузка TLS-сертификата и ключа сервера
+	creds, err := credentials.NewServerTLSFromFile("./cmd/shortener/server.crt", "./cmd/shortener/server.key")
+	if err != nil {
+		logger.Log.Warnln("Ошибка загрузки TLS сертификата:", err)
+	}
 	// Создаем gRPC сервер без зарегистрированной службы
-	s := grpc.NewServer()
+	s := grpc.NewServer(grpc.Creds(creds))
 	// Регистрируем сервис
 	pb.RegisterShortenerServer(s, &service.ShortenerServer{})
 	fmt.Println("сервер gRPC начал работу")
 	// Получение запроса gRpc
 	go func() {
 		if err := s.Serve(listen); err != nil {
-			slog.Error("ошибка при работе сервера", "error", err)
+			logger.Log.Warnln("ошибка при работе сервера", "error", err)
 			os.Exit(1)
 		}
 	}()
 
-	// Создаем канал для получения системных сигналов
-	stop := make(chan os.Signal, 1)
-	signal.Notify(stop, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
-
+	// Создаем контекст для получения системных сигналов
+	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
+	defer stop()
 	// конструируем менеджер TLS-сертификатов
 	manager := &autocert.Manager{
 		// директория для хранения сертификатов
@@ -100,6 +104,7 @@ func main() {
 		// перечень доменов, для которых будут поддерживаться сертификаты
 		HostPolicy: autocert.HostWhitelist("localhost"),
 	}
+
 	var server = &http.Server{
 		Addr:      config.ConfigAdreses.ServerBindAdress,
 		Handler:   r,
@@ -125,7 +130,7 @@ func main() {
 		}()
 	}
 	// ловим сигналы
-	<-stop
+	<-ctx.Done()
 	logger.Log.Infoln("Получен сигнал завершения. Начинаем graceful shutdown...")
 	// Создаем контекст с таймаутом для завершения активных запросов
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
