@@ -3,7 +3,6 @@ package repository
 import (
 	"database/sql"
 	"errors"
-	"log"
 
 	"github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
@@ -128,18 +127,18 @@ func (d *DB) GetDataByUID(uid uint32) []model.ResponseDataBatchByCookie {
 
 	rows, err := d.dbconn.Query("SELECT shortURL, originalURL FROM storage WHERE uuid=$1", uid)
 	if err != nil {
-		log.Fatal(err)
+		logger.Log.Fatal(err)
 	}
 	defer rows.Close()
 	for rows.Next() {
 		var r model.ResponseDataBatchByCookie
 		if err := rows.Scan(&r.ShortURL, &r.OriginalURL); err != nil {
-			log.Fatal(err)
+			logger.Log.Fatal(err)
 		}
 		result = append(result, r)
 	}
 	if err := rows.Err(); err != nil {
-		log.Fatal(err)
+		logger.Log.Fatal(err)
 	}
 	return result
 }
@@ -190,4 +189,24 @@ func (d *DB) SetIsDeleted(shortURLs []string) {
 	if err != nil {
 		logger.Log.Errorln("error while UPDATE isdeleted fiels in db", err)
 	}
+}
+
+func (d *DB) GetStatData() (statData model.ResponseStatData) {
+	err := d.dbconn.QueryRow("SELECT COUNT(DISTINCT shorturl) FROM storage;").Scan(&statData.Urls)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			statData.Urls = 0
+		} else {
+			logger.Log.Infoln(err)
+		}
+	}
+	err = d.dbconn.QueryRow("SELECT COUNT(DISTINCT cookie) FROM storage;").Scan(&statData.Users)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			statData.Users = 0
+		} else {
+			logger.Log.Infoln(err)
+		}
+	}
+	return
 }

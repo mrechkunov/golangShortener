@@ -14,6 +14,7 @@ type StorageI interface {
 	IsDeleted(shortURL string) bool
 	IsCreator(shortURL string, cookie string) bool
 	SetIsDeleted(shortURL []string)
+	GetStatData() model.ResponseStatData
 	Close() error
 }
 
